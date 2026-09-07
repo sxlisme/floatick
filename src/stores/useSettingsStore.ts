@@ -12,6 +12,7 @@ interface SettingsState {
   updateAlwaysOnTop: (alwaysOnTop: boolean) => Promise<void>;
   updateCollapseOnBlur: (collapse: boolean) => Promise<void>;
   updatePresentationMode: (presentationMode: PresentationMode) => Promise<void>;
+  updatePanelScale: (panelScale: number) => Promise<void>;
 }
 
 const defaultSettings: AppSettings = {
@@ -20,6 +21,7 @@ const defaultSettings: AppSettings = {
   alwaysOnTop: true,
   collapseWhenClickingOutside: true,
   presentationMode: "transient",
+  panelScale: 1,
 };
 
 function applyTheme(theme: ThemePreference) {
@@ -89,6 +91,7 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
       applyTheme(current.theme);
       applyLanguage(current.language);
       await api.setAlwaysOnTop(current.alwaysOnTop);
+      await api.setWindowScale(current.panelScale);
       await api.applyPresentationMode(current.presentationMode);
     } catch {
       set({ isLoaded: true });
@@ -133,5 +136,12 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
     set({ settings: next });
     await api.saveSettings(next);
     await api.applyPresentationMode(presentationMode);
+  },
+
+  updatePanelScale: async (panelScale: number) => {
+    const next = { ...get().settings, panelScale };
+    set({ settings: next });
+    await api.saveSettings(next);
+    await api.setWindowScale(panelScale);
   },
 }));

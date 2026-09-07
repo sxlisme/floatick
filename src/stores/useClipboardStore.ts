@@ -13,6 +13,7 @@ interface ClipboardState {
   loadClipboardItems: () => Promise<void>;
   toggleFavorite: (id: string) => Promise<void>;
   deleteItem: (id: string) => Promise<void>;
+  deleteItems: (ids: string[]) => Promise<void>;
 }
 
 export const useClipboardStore = create<ClipboardState>((set, get) => ({
@@ -46,6 +47,13 @@ export const useClipboardStore = create<ClipboardState>((set, get) => ({
 
   deleteItem: async (id) => {
     const items = get().items.filter((item) => item.id !== id);
+    set({ items });
+    await api.saveClipboardItems(items);
+  },
+
+  deleteItems: async (ids) => {
+    const idSet = new Set(ids);
+    const items = get().items.filter((item) => !idSet.has(item.id));
     set({ items });
     await api.saveClipboardItems(items);
   },

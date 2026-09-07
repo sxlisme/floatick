@@ -65,6 +65,11 @@ pub fn save_settings(settings: AppSettings) -> Result<(), String> {
 }
 
 #[tauri::command]
+pub fn set_window_scale(app_handle: AppHandle, panel_scale: f64) -> Result<(), String> {
+    crate::tray::resize_main_window(&app_handle, panel_scale)
+}
+
+#[tauri::command]
 pub fn apply_presentation_mode(app_handle: AppHandle, presentation_mode: String) {
     crate::tray::apply_presentation_mode(&app_handle, &presentation_mode);
 }

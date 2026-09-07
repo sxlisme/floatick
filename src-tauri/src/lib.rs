@@ -32,6 +32,10 @@ pub fn run() {
             // Blur / Click-outside handling & initial window position
             if let Some(window) = app.get_webview_window(tray::MAIN_WINDOW_LABEL) {
                 platform::prepare_transparent_window(&window);
+                let panel_scale = storage::load_settings()
+                    .map(|s| s.panel_scale)
+                    .unwrap_or(1.0);
+                let _ = tray::resize_main_window(app.handle(), panel_scale);
 
                 let is_autostart = std::env::args().any(|arg| arg == "--autostart");
                 let initial_mode = storage::load_settings()
@@ -88,6 +92,7 @@ pub fn run() {
             commands::save_clipboard_items,
             commands::get_settings,
             commands::save_settings,
+            commands::set_window_scale,
             commands::apply_presentation_mode,
             commands::show_main_window,
             commands::start_window_drag,

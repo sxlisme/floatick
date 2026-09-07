@@ -2,10 +2,13 @@ use tauri::{
     menu::{Menu, MenuItem, PredefinedMenuItem},
     tray::{MouseButton, MouseButtonState, TrayIconBuilder, TrayIconEvent},
     AppHandle, LogicalPosition, Manager, PhysicalPosition, Position, Rect,
+    LogicalSize, Size,
 };
 
 pub const MAIN_WINDOW_LABEL: &str = "main";
 pub const BALL_WINDOW_LABEL: &str = "ball";
+const BASE_PANEL_WIDTH: f64 = 440.0;
+const BASE_PANEL_HEIGHT: f64 = 700.0;
 
 pub fn setup_tray(app: &AppHandle) -> Result<(), Box<dyn std::error::Error>> {
     let show_item = MenuItem::with_id(app, "show", "显示 Floatick", true, None::<&str>)?;
@@ -169,8 +172,11 @@ pub fn position_window_at_rect(window: &tauri::WebviewWindow, rect: Rect) {
         .map(|m| m.scale_factor())
         .unwrap_or_else(|| window.scale_factor().unwrap_or(2.0));
 
-    let window_width = 440.0;
-    let window_height = 700.0;
+    let scale = crate::storage::load_settings()
+        .map(|s| s.panel_scale.clamp(0.5, 1.5))
+        .unwrap_or(1.0);
+    let window_width = BASE_PANEL_WIDTH * scale;
+    let window_height = BASE_PANEL_HEIGHT * scale;
 
     let tray_pos = rect.position.to_logical::<f64>(scale_factor);
     let tray_size = rect.size.to_logical::<f64>(scale_factor);
@@ -251,7 +257,10 @@ pub fn show_window(app_handle: &AppHandle) {
                 let scale = monitor.scale_factor();
                 let mon_pos = monitor.position().to_logical::<f64>(scale);
                 let mon_size = monitor.size().to_logical::<f64>(scale);
-                let window_width = 440.0;
+                let scale = crate::storage::load_settings()
+                    .map(|s| s.panel_scale.clamp(0.5, 1.5))
+                    .unwrap_or(1.0);
+                let window_width = BASE_PANEL_WIDTH * scale;
                 let window_x = mon_pos.x + mon_size.width - window_width - 20.0;
                 let window_y = mon_pos.y + 36.0;
                 let _ = window.set_position(Position::Logical(LogicalPosition::new(window_x, window_y)));
@@ -261,6 +270,19 @@ pub fn show_window(app_handle: &AppHandle) {
         let _ = window.show();
         let _ = window.set_focus();
     }
+}
+
+pub fn resize_main_window(app_handle: &AppHandle, panel_scale: f64) -> Result<(), String> {
+    let scale = panel_scale.clamp(0.5, 1.5);
+    if let Some(window) = app_handle.get_webview_window(MAIN_WINDOW_LABEL) {
+        let width = BASE_PANEL_WIDTH * scale;
+        let height = BASE_PANEL_HEIGHT * scale;
+        window
+            .set_size(Size::Logical(LogicalSize::new(width, height)))
+            .map_err(|e| e.to_string())?;
+        constrain_window_to_visible_area(&window, None);
+    }
+    Ok(())
 }
 
 pub fn show_ball(app_handle: &AppHandle) {

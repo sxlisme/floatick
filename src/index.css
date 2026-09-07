@@ -150,10 +150,27 @@
 .floatick-editor-shell .ProseMirror {
   min-height: 100%;
   outline: none;
+  -webkit-user-modify: read-write;
 }
 
 .tiptap p:first-child {
   min-height: 1.5em;
+}
+
+.floatick-editor-shell .ProseMirror p:first-child {
+  white-space: pre-wrap;
+}
+
+.floatick-editor-shell .ProseMirror p.is-editor-empty:first-child::before {
+  content: attr(data-placeholder);
+  float: left;
+  height: 0;
+  pointer-events: none;
+  color: transparent;
+}
+
+.floatick-editor-shell .ProseMirror-focused p.is-editor-empty:first-child::before {
+  content: "";
 }
 
 /* Zero-delay atomic theme switch: suppresses all CSS transitions during theme update to eliminate staggered lag */

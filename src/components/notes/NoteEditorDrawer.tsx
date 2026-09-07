@@ -148,7 +148,7 @@ export const NoteEditorDrawer: React.FC<NoteEditorDrawerProps> = ({
   const canSave = title.trim().length > 0 || content.trim().length > 0;
 
   return (
-    <div className="absolute inset-0 z-50 bg-[var(--color-bg-panel)] text-[var(--color-text-primary)] flex flex-col select-none animate-in fade-in duration-150">
+    <div className="absolute inset-0 z-50 bg-[var(--color-bg-panel)] text-[var(--color-text-primary)] flex flex-col animate-in fade-in duration-150">
       {/* Top Header Bar */}
       <div className="h-12 px-5 border-b border-[var(--color-border-panel)] flex items-center justify-between shrink-0 bg-[var(--color-bg-panel)]">
         <div className="flex items-center space-x-2">

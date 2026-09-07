@@ -1,6 +1,7 @@
 import React, { useEffect, useState, useRef, useMemo } from "react";
 import { useEditor, EditorContent, Editor } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
+import Placeholder from "@tiptap/extension-placeholder";
 import TaskList from "@tiptap/extension-task-list";
 import TaskItem from "@tiptap/extension-task-item";
 import { Markdown } from "tiptap-markdown";
@@ -162,6 +163,32 @@ interface SlashCommandItem {
   icon: React.FC<{ className?: string }>;
   action: (editor: Editor) => void;
 }
+
+const EMPTY_EDITOR_CARET_MARKER = "\u00A0";
+
+const normalizeEditorMarkdown = (markdown: string): string => {
+  const markerRegex = new RegExp(`^${EMPTY_EDITOR_CARET_MARKER}`);
+  if (markdown === EMPTY_EDITOR_CARET_MARKER || markdown === "&nbsp;") {
+    return "";
+  }
+  if (markerRegex.test(markdown) && markdown.replace(markerRegex, "").trim().length > 0) {
+    return markdown.replace(markerRegex, "");
+  }
+  return markdown;
+};
+
+const emptyEditorContent = () => `<p>${EMPTY_EDITOR_CARET_MARKER}</p>`;
+
+const isOnlyCaretMarker = (editor: Editor): boolean => {
+  return editor.state.doc.textContent === EMPTY_EDITOR_CARET_MARKER;
+};
+
+const ensureCaretMarker = (editor: Editor): void => {
+  if (!editor.isDestroyed && editor.isEmpty) {
+    editor.commands.setContent(emptyEditorContent(), { emitUpdate: false });
+    editor.commands.focus("end");
+  }
+};
 
 const SLASH_COMMANDS: SlashCommandItem[] = [
   {
@@ -585,6 +612,7 @@ export const FloatickTiptapEditor: React.FC<FloatickTiptapEditorProps> = ({
   const containerRef = useRef<HTMLDivElement>(null);
   const menuListRef = useRef<HTMLDivElement>(null);
   const itemRefs = useRef<(HTMLButtonElement | null)[]>([]);
+  const isRemovingCaretMarkerRef = useRef(false);
 
   const [, setSelectionTick] = useState(0);
 
@@ -642,6 +670,10 @@ export const FloatickTiptapEditor: React.FC<FloatickTiptapEditorProps> = ({
           levels: [1, 2, 3],
         },
       }),
+      Placeholder.configure({
+        placeholder: " ",
+        showOnlyWhenEditable: true,
+      }),
       TaskList,
       TaskItem.configure({
         nested: true,
@@ -652,14 +684,34 @@ export const FloatickTiptapEditor: React.FC<FloatickTiptapEditorProps> = ({
         transformCopiedText: true,
       }),
     ],
-    content: initialContent || "",
+    content: initialContent || emptyEditorContent(),
     editorProps: {
       attributes: {
         class: "tiptap focus:outline-none min-h-[160px] pb-12",
+        spellcheck: "false",
+      },
+      handleDOMEvents: {
+        mousedown: (view, event) => {
+          const target = event.target as HTMLElement;
+          if (target.closest("button,input,textarea,[role='button']")) {
+            return false;
+          }
+
+          window.requestAnimationFrame(() => {
+            view.focus();
+          });
+          return false;
+        },
       },
       handleKeyDown: (_view, event) => {
         if (event.isComposing || (event as any).keyCode === 229) {
           return false;
+        }
+
+        if ((event.key === "Backspace" || event.key === "Delete") && editor && isOnlyCaretMarker(editor)) {
+          event.preventDefault();
+          editor.commands.focus("end");
+          return true;
         }
 
         // If slash menu is active, intercept navigation keys before ProseMirror
@@ -706,6 +758,15 @@ export const FloatickTiptapEditor: React.FC<FloatickTiptapEditorProps> = ({
         return false;
       },
     },
+    onCreate: ({ editor }) => {
+      if (!initialContent.trim()) {
+        window.requestAnimationFrame(() => {
+          if (!editor.isDestroyed) {
+            editor.commands.setContent(emptyEditorContent(), { emitUpdate: false });
+          }
+        });
+      }
+    },
     onUpdate: ({ editor }) => {
       const { from } = editor.state.selection;
       const textBefore = editor.state.doc.textBetween(Math.max(0, from - 24), from, "\n");
@@ -748,7 +809,20 @@ export const FloatickTiptapEditor: React.FC<FloatickTiptapEditorProps> = ({
       }
 
       const md = (editor.storage as any).markdown?.getMarkdown?.() ?? "";
-      onChange?.(md);
+      const normalizedMd = normalizeEditorMarkdown(md);
+
+      const textContent = editor.state.doc.textContent;
+      if (!textContent) {
+        window.requestAnimationFrame(() => ensureCaretMarker(editor));
+      }
+
+      if (!isRemovingCaretMarkerRef.current && textContent.startsWith(EMPTY_EDITOR_CARET_MARKER) && textContent.length > 1) {
+        isRemovingCaretMarkerRef.current = true;
+        editor.chain().deleteRange({ from: 1, to: 2 }).run();
+        isRemovingCaretMarkerRef.current = false;
+      }
+
+      onChange?.(normalizedMd);
     },
     onSelectionUpdate: () => {
       setSelectionTick((t) => t + 1);
@@ -773,8 +847,8 @@ export const FloatickTiptapEditor: React.FC<FloatickTiptapEditorProps> = ({
   }, [showSlashMenu, slashMenuIndex]);
 
   useEffect(() => {
-    if (editor && !editor.isDestroyed && initialContent && editor.isEmpty) {
-      editor.commands.setContent(initialContent);
+    if (editor && !editor.isDestroyed && editor.isEmpty) {
+      editor.commands.setContent(initialContent || emptyEditorContent(), { emitUpdate: false });
     }
   }, [editor, initialContent]);
 
@@ -801,11 +875,12 @@ export const FloatickTiptapEditor: React.FC<FloatickTiptapEditorProps> = ({
     editorRef.current = {
       getMarkdown: () => {
         if (!editor) return "";
-        return (editor.storage as any).markdown?.getMarkdown?.() ?? "";
+        const md = (editor.storage as any).markdown?.getMarkdown?.() ?? "";
+        return normalizeEditorMarkdown(md);
       },
       setMarkdown: (content: string) => {
         if (!editor) return;
-        editor.commands.setContent(content || "");
+        editor.commands.setContent(content || emptyEditorContent(), { emitUpdate: false });
       },
       focus: () => {
         editor?.commands.focus();
@@ -820,8 +895,9 @@ export const FloatickTiptapEditor: React.FC<FloatickTiptapEditorProps> = ({
     }
 
     window.requestAnimationFrame(() => {
-      if (editor && !editor.isDestroyed && !editor.isFocused) {
-        editor.chain().focus("end").run();
+      if (editor && !editor.isDestroyed) {
+        editor.view.focus();
+        editor.commands.focus("end");
       }
     });
   };

@@ -8,6 +8,7 @@ import {
   Copy,
   Check,
   SignOut,
+  ArrowCounterClockwise,
 } from "@phosphor-icons/react";
 import { useSettingsStore } from "@/stores/useSettingsStore";
 import { api } from "@/lib/api";
@@ -49,15 +50,18 @@ export const SettingsDrawer: React.FC<SettingsDrawerProps> = ({
   const updateLanguage = useSettingsStore((s) => s.updateLanguage);
   const updateAlwaysOnTop = useSettingsStore((s) => s.updateAlwaysOnTop);
   const updatePresentationMode = useSettingsStore((s) => s.updatePresentationMode);
+  const updatePanelScale = useSettingsStore((s) => s.updatePanelScale);
 
   const [autostart, setAutostart] = useState(false);
   const [copiedPath, setCopiedPath] = useState(false);
+  const [panelScaleDraft, setPanelScaleDraft] = useState(settings.panelScale);
 
   useEffect(() => {
     if (isOpen) {
       api.isAutostartEnabled().then(setAutostart).catch(() => {});
+      setPanelScaleDraft(settings.panelScale);
     }
-  }, [isOpen]);
+  }, [isOpen, settings.panelScale]);
 
   if (!isOpen) return null;
 
@@ -79,6 +83,21 @@ export const SettingsDrawer: React.FC<SettingsDrawerProps> = ({
 
   const handleQuit = async () => {
     await api.quitApp();
+  };
+
+  const commitPanelScale = async (value = panelScaleDraft) => {
+    const next = Math.min(1.5, Math.max(0.5, Number(value.toFixed(2))));
+    setPanelScaleDraft(next);
+    if (next !== settings.panelScale) {
+      await updatePanelScale(next);
+    }
+  };
+
+  const handleResetPanelScale = async () => {
+    setPanelScaleDraft(1);
+    if (settings.panelScale !== 1) {
+      await updatePanelScale(1);
+    }
   };
 
   return (
@@ -226,6 +245,45 @@ export const SettingsDrawer: React.FC<SettingsDrawerProps> = ({
                 })}
               </div>
             </div>
+
+            {/* Panel Scale */}
+            <div className="px-3.5 py-2.5 min-h-[60px]">
+              <div className="flex items-center justify-between gap-3 mb-2">
+                <span className="text-[13px] text-[var(--color-text-primary)]">
+                  {t("panelScaleLabel")}
+                </span>
+                <div className="flex items-center gap-2">
+                  <span className="min-w-[42px] text-right text-[12px] font-mono text-[var(--color-text-subtle)]">
+                    {Math.round(panelScaleDraft * 100)}%
+                  </span>
+                  <button
+                    type="button"
+                    onClick={handleResetPanelScale}
+                    title={t("resetPanelScale")}
+                    className="w-7 h-7 rounded-[8px] flex items-center justify-center text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] hover:bg-[var(--color-hover-overlay)] tactile-btn cursor-pointer"
+                  >
+                    <ArrowCounterClockwise size={15} weight="bold" />
+                  </button>
+                </div>
+              </div>
+              <input
+                type="range"
+                min={0.5}
+                max={1.5}
+                step={0.01}
+                value={panelScaleDraft}
+                onChange={(event) => setPanelScaleDraft(Number(event.target.value))}
+                onMouseUp={() => commitPanelScale()}
+                onTouchEnd={() => commitPanelScale()}
+                onKeyUp={() => commitPanelScale()}
+                onBlur={() => commitPanelScale()}
+                className="w-full accent-[var(--color-teal-primary)] cursor-pointer"
+              />
+              <div className="mt-1 flex justify-between text-[10.5px] font-mono text-[var(--color-text-subtle)]">
+                <span>50%</span>
+                <span>150%</span>
+              </div>
+            </div>
           </div>
         </div>
 
@@ -261,7 +319,7 @@ export const SettingsDrawer: React.FC<SettingsDrawerProps> = ({
                 {t("versionLabel")}
               </span>
               <span className="text-[12px] font-mono text-[var(--color-text-subtle)]">
-                v0.4.0
+                v0.5.1
               </span>
             </div>
           </div>

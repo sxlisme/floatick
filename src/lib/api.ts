@@ -148,6 +148,7 @@ const MOCK_SETTINGS: AppSettings = {
   alwaysOnTop: true,
   collapseWhenClickingOutside: true,
   presentationMode: "transient",
+  panelScale: 1,
 };
 
 export const api = {
@@ -217,6 +218,10 @@ export const api = {
   applyPresentationMode: async (presentationMode: PresentationMode): Promise<void> => {
     if (isMock) return;
     await invoke("apply_presentation_mode", { presentationMode });
+  },
+  setWindowScale: async (panelScale: number): Promise<void> => {
+    if (isMock) return;
+    await invoke("set_window_scale", { panelScale });
   },
   showMainWindow: async (): Promise<void> => {
     if (isMock) return;

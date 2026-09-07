@@ -57,4 +57,5 @@ export interface AppSettings {
   alwaysOnTop: boolean;
   collapseWhenClickingOutside: boolean;
   presentationMode: PresentationMode;
+  panelScale: number;
 }

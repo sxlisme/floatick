@@ -13,6 +13,10 @@ fn default_presentation_mode() -> String {
     "transient".to_string()
 }
 
+fn default_panel_scale() -> f64 {
+    1.0
+}
+
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct TodoItem {
@@ -111,6 +115,8 @@ pub struct AppSettings {
     pub collapse_when_clicking_outside: bool,
     #[serde(default = "default_presentation_mode")]
     pub presentation_mode: String,
+    #[serde(default = "default_panel_scale")]
+    pub panel_scale: f64,
 }
 
 impl Default for AppSettings {
@@ -121,6 +127,7 @@ impl Default for AppSettings {
             always_on_top: true,
             collapse_when_clicking_outside: true,
             presentation_mode: default_presentation_mode(),
+            panel_scale: 1.0,
         }
     }
 }
