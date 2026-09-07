@@ -3,13 +3,15 @@ use std::io::Write;
 use std::path::PathBuf;
 use std::time::{SystemTime, UNIX_EPOCH};
 
-use crate::models::{AppSettings, NoteItem, TagWorkspace, TodoItem};
+use crate::models::{AppSettings, ClipboardItem, NoteItem, TagWorkspace, TodoItem};
 
 const ROOT_DIR_NAME: &str = ".floatick";
 const TODOS_FILE: &str = "todos.json";
 const TAGS_FILE: &str = "tags.json";
 const NOTES_FILE: &str = "notes.json";
 const SETTINGS_FILE: &str = "settings.json";
+const CLIPBOARD_FILE: &str = "clipboard.json";
+const CLIPBOARD_RETENTION_DAYS: i64 = 7;
 
 pub fn get_storage_dir() -> Result<PathBuf, String> {
     let home = dirs::home_dir().ok_or_else(|| "Could not locate home directory".to_string())?;
@@ -147,4 +149,66 @@ pub fn load_settings() -> Result<AppSettings, String> {
 
 pub fn save_settings(settings: &AppSettings) -> Result<(), String> {
     atomic_save(SETTINGS_FILE, settings)
+}
+
+fn prune_clipboard_items(items: Vec<ClipboardItem>) -> Vec<ClipboardItem> {
+    let cutoff = chrono::Utc::now() - chrono::Duration::days(CLIPBOARD_RETENTION_DAYS);
+    items
+        .into_iter()
+        .filter(|item| {
+            if item.favorite_at.is_some() {
+                return true;
+            }
+            chrono::DateTime::parse_from_rfc3339(&item.created_at)
+                .map(|dt| dt.with_timezone(&chrono::Utc) >= cutoff)
+                .unwrap_or(true)
+        })
+        .collect()
+}
+
+pub fn load_clipboard_items() -> Result<Vec<ClipboardItem>, String> {
+    let dir = get_storage_dir()?;
+    let path = dir.join(CLIPBOARD_FILE);
+    if !path.exists() {
+        return Ok(Vec::new());
+    }
+    let content = fs::read_to_string(&path)
+        .map_err(|e| format!("Failed to read {CLIPBOARD_FILE}: {e}"))?;
+    let items: Vec<ClipboardItem> = serde_json::from_str(&content)
+        .map_err(|e| format!("Failed to parse {CLIPBOARD_FILE}: {e}"))?;
+    let pruned = prune_clipboard_items(items);
+    let _ = atomic_save(CLIPBOARD_FILE, &pruned);
+    Ok(pruned)
+}
+
+pub fn save_clipboard_items(items: &[ClipboardItem]) -> Result<(), String> {
+    let pruned = prune_clipboard_items(items.to_vec());
+    atomic_save(CLIPBOARD_FILE, &pruned)
+}
+
+pub fn add_clipboard_text(content: String) -> Result<(), String> {
+    let trimmed = content.trim().to_string();
+    if trimmed.is_empty() {
+        return Ok(());
+    }
+
+    let mut items = load_clipboard_items().unwrap_or_default();
+    if items.first().map(|item| item.content.as_str()) == Some(trimmed.as_str()) {
+        return Ok(());
+    }
+    if items.iter().any(|item| item.content == trimmed) {
+        items.retain(|item| item.content != trimmed);
+    }
+
+    items.insert(
+        0,
+        ClipboardItem {
+            id: format!("clip-{}", chrono::Utc::now().timestamp_micros()),
+            content: trimmed,
+            created_at: chrono::Utc::now().to_rfc3339(),
+            favorite_at: None,
+        },
+    );
+
+    save_clipboard_items(&items)
 }

@@ -11,7 +11,7 @@ import {
 } from "@phosphor-icons/react";
 import { useSettingsStore } from "@/stores/useSettingsStore";
 import { api } from "@/lib/api";
-import type { ThemePreference, LanguagePreference } from "@/types";
+import type { ThemePreference, LanguagePreference, PresentationMode } from "@/types";
 
 interface SettingsDrawerProps {
   isOpen: boolean;
@@ -48,7 +48,7 @@ export const SettingsDrawer: React.FC<SettingsDrawerProps> = ({
   const updateTheme = useSettingsStore((s) => s.updateTheme);
   const updateLanguage = useSettingsStore((s) => s.updateLanguage);
   const updateAlwaysOnTop = useSettingsStore((s) => s.updateAlwaysOnTop);
-  const updateCollapseOnBlur = useSettingsStore((s) => s.updateCollapseOnBlur);
+  const updatePresentationMode = useSettingsStore((s) => s.updatePresentationMode);
 
   const [autostart, setAutostart] = useState(false);
   const [copiedPath, setCopiedPath] = useState(false);
@@ -197,15 +197,34 @@ export const SettingsDrawer: React.FC<SettingsDrawerProps> = ({
               />
             </div>
 
-            {/* Collapse on Blur */}
-            <div className="px-3.5 py-2.5 flex items-center justify-between min-h-[44px]">
+            {/* Presentation Mode */}
+            <div className="px-3.5 py-2.5 flex items-center justify-between min-h-[48px] gap-3">
               <span className="text-[13px] text-[var(--color-text-primary)]">
-                {t("collapseWhenClickingOutsideLabel")}
+                {t("presentationModeLabel")}
               </span>
-              <ToggleSwitch
-                checked={settings.collapseWhenClickingOutside}
-                onChange={updateCollapseOnBlur}
-              />
+              <div className="flex items-center p-0.5 bg-[var(--color-hover-overlay)] rounded-lg shrink-0">
+                {[
+                  { id: "panelPersistent" as PresentationMode, label: t("presentationPanelPersistent") },
+                  { id: "ballPersistent" as PresentationMode, label: t("presentationBallPersistent") },
+                  { id: "transient" as PresentationMode, label: t("presentationTransient") },
+                ].map(({ id, label }) => {
+                  const isActive = settings.presentationMode === id;
+                  return (
+                    <button
+                      key={id}
+                      type="button"
+                      onClick={() => updatePresentationMode(id)}
+                      className={`px-2 py-1 text-[11.5px] rounded-md transition-all whitespace-nowrap cursor-pointer tactile-btn ${
+                        isActive
+                          ? "bg-[var(--color-bg-drawer)] text-[var(--color-teal-primary)] font-medium shadow-xs"
+                          : "text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)]"
+                      }`}
+                    >
+                      <span>{label}</span>
+                    </button>
+                  );
+                })}
+              </div>
             </div>
           </div>
         </div>

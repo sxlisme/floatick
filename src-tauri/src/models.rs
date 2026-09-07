@@ -9,6 +9,10 @@ fn default_system() -> String {
     "system".to_string()
 }
 
+fn default_presentation_mode() -> String {
+    "transient".to_string()
+}
+
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct TodoItem {
@@ -86,6 +90,16 @@ pub struct NoteItem {
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
+pub struct ClipboardItem {
+    pub id: String,
+    pub content: String,
+    pub created_at: String,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub favorite_at: Option<String>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct AppSettings {
     #[serde(default = "default_system")]
     pub theme: String,
@@ -95,6 +109,8 @@ pub struct AppSettings {
     pub always_on_top: bool,
     #[serde(default = "default_true")]
     pub collapse_when_clicking_outside: bool,
+    #[serde(default = "default_presentation_mode")]
+    pub presentation_mode: String,
 }
 
 impl Default for AppSettings {
@@ -104,6 +120,7 @@ impl Default for AppSettings {
             language: default_system(),
             always_on_top: true,
             collapse_when_clicking_outside: true,
+            presentation_mode: default_presentation_mode(),
         }
     }
 }

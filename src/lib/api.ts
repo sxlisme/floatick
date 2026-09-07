@@ -1,5 +1,5 @@
 import { invoke } from "@tauri-apps/api/core";
-import type { TodoItem, TagWorkspace, NoteItem, AppSettings } from "@/types";
+import type { TodoItem, TagWorkspace, NoteItem, ClipboardItem, AppSettings, PresentationMode } from "@/types";
 
 const isMock = typeof window !== "undefined" && (
   window.location.search.includes("mock") || !("__TAURI_INTERNALS__" in window)
@@ -127,11 +127,27 @@ const MOCK_NOTES: NoteItem[] = [
   },
 ];
 
+const MOCK_CLIPBOARD_ITEMS: ClipboardItem[] = [
+  {
+    id: "mock-clip-1",
+    content: "Floatick 剪贴板历史：只保存文本，普通记录 7 天后自动清理。",
+    createdAt: nowIso,
+    favoriteAt: null,
+  },
+  {
+    id: "mock-clip-2",
+    content: "收藏后的剪贴板内容会永久保留，并可以单独筛选查看。",
+    createdAt: new Date(Date.now() - 3600 * 1000 * 3).toISOString(),
+    favoriteAt: nowIso,
+  },
+];
+
 const MOCK_SETTINGS: AppSettings = {
   theme: "dark",
   language: "en",
   alwaysOnTop: true,
   collapseWhenClickingOutside: true,
+  presentationMode: "transient",
 };
 
 export const api = {
@@ -165,6 +181,16 @@ export const api = {
     await invoke("save_notes", { notes });
   },
 
+  // Clipboard
+  getClipboardItems: async (): Promise<ClipboardItem[]> => {
+    if (isMock) return MOCK_CLIPBOARD_ITEMS;
+    return await invoke<ClipboardItem[]>("get_clipboard_items");
+  },
+  saveClipboardItems: async (items: ClipboardItem[]): Promise<void> => {
+    if (isMock) return;
+    await invoke("save_clipboard_items", { items });
+  },
+
   // Settings
   getSettings: async (): Promise<AppSettings> => {
     if (isMock) return MOCK_SETTINGS;
@@ -187,6 +213,22 @@ export const api = {
   setAlwaysOnTop: async (alwaysOnTop: boolean): Promise<void> => {
     if (isMock) return;
     await invoke("set_always_on_top", { alwaysOnTop });
+  },
+  applyPresentationMode: async (presentationMode: PresentationMode): Promise<void> => {
+    if (isMock) return;
+    await invoke("apply_presentation_mode", { presentationMode });
+  },
+  showMainWindow: async (): Promise<void> => {
+    if (isMock) return;
+    await invoke("show_main_window");
+  },
+  startWindowDrag: async (): Promise<void> => {
+    if (isMock) return;
+    await invoke("start_window_drag");
+  },
+  getWindowLabel: async (): Promise<string> => {
+    if (isMock) return "main";
+    return await invoke<string>("get_window_label");
   },
   updateTrayCount: async (count: number): Promise<void> => {
     if (isMock) return;

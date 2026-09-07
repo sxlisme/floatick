@@ -1,5 +1,5 @@
 import { create } from "zustand";
-import type { AppSettings, ThemePreference, LanguagePreference } from "@/types";
+import type { AppSettings, ThemePreference, LanguagePreference, PresentationMode } from "@/types";
 import { api } from "@/lib/api";
 import i18n from "@/i18n";
 
@@ -11,6 +11,7 @@ interface SettingsState {
   updateLanguage: (language: LanguagePreference) => Promise<void>;
   updateAlwaysOnTop: (alwaysOnTop: boolean) => Promise<void>;
   updateCollapseOnBlur: (collapse: boolean) => Promise<void>;
+  updatePresentationMode: (presentationMode: PresentationMode) => Promise<void>;
 }
 
 const defaultSettings: AppSettings = {
@@ -18,6 +19,7 @@ const defaultSettings: AppSettings = {
   language: "system",
   alwaysOnTop: true,
   collapseWhenClickingOutside: true,
+  presentationMode: "transient",
 };
 
 function applyTheme(theme: ThemePreference) {
@@ -87,6 +89,7 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
       applyTheme(current.theme);
       applyLanguage(current.language);
       await api.setAlwaysOnTop(current.alwaysOnTop);
+      await api.applyPresentationMode(current.presentationMode);
     } catch {
       set({ isLoaded: true });
       applyTheme(defaultSettings.theme);
@@ -119,5 +122,16 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
     const next = { ...get().settings, collapseWhenClickingOutside };
     set({ settings: next });
     await api.saveSettings(next);
+  },
+
+  updatePresentationMode: async (presentationMode: PresentationMode) => {
+    const next = {
+      ...get().settings,
+      presentationMode,
+      collapseWhenClickingOutside: presentationMode !== "panelPersistent",
+    };
+    set({ settings: next });
+    await api.saveSettings(next);
+    await api.applyPresentationMode(presentationMode);
   },
 }));

@@ -3,6 +3,7 @@ import { Header } from "@/components/layout/Header";
 import { ContentSwitcher } from "@/components/layout/ContentSwitcher";
 import { TodoPanel } from "@/components/todos/TodoPanel";
 import { NotePanel } from "@/components/notes/NotePanel";
+import { ClipboardPanel } from "@/components/clipboard/ClipboardPanel";
 import { SettingsDrawer } from "@/components/settings/SettingsDrawer";
 import { TagDrawer } from "@/components/tags/TagDrawer";
 import { TodoEditorDrawer } from "@/components/todos/TodoEditorDrawer";
@@ -11,10 +12,14 @@ import { useSettingsStore } from "@/stores/useSettingsStore";
 import { useTodoStore } from "@/stores/useTodoStore";
 import { useTagStore } from "@/stores/useTagStore";
 import { useNoteStore } from "@/stores/useNoteStore";
+import { useClipboardStore } from "@/stores/useClipboardStore";
 import { api } from "@/lib/api";
+import { FloatickBrandMark } from "@/components/common/FloatickBrandMark";
+import type { MainTab } from "@/types";
 
 export const App: React.FC = () => {
-  const [activeTab, setActiveTab] = useState<"todos" | "notes">("todos");
+  const [windowLabel, setWindowLabel] = useState<"main" | "ball" | null>(null);
+  const [activeTab, setActiveTab] = useState<MainTab>("todos");
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [isTagDrawerOpen, setIsTagDrawerOpen] = useState(false);
   const [tagDrawerMode, setTagDrawerMode] = useState<"filter" | "assignment" | "manage">("filter");
@@ -44,17 +49,24 @@ export const App: React.FC = () => {
   const loadTodos = useTodoStore((s) => s.loadTodos);
   const loadTags = useTagStore((s) => s.loadTags);
   const loadNotes = useNoteStore((s) => s.loadNotes);
+  const loadClipboardItems = useClipboardStore((s) => s.loadClipboardItems);
 
   useEffect(() => {
+    api.getWindowLabel()
+      .then((label) => setWindowLabel(label === "ball" ? "ball" : "main"))
+      .catch(() => setWindowLabel("main"));
+
     // Initial data hydration from ~/.floatick
     loadSettings();
     loadTodos();
     loadTags();
     loadNotes();
+    loadClipboardItems();
 
     const params = new URLSearchParams(window.location.search);
-    if (params.get("tab") === "notes") {
-      setActiveTab("notes");
+    const initialTab = params.get("tab");
+    if (initialTab === "notes" || initialTab === "clipboard") {
+      setActiveTab(initialTab);
     }
     if (params.get("mock") === "editor") {
       setTimeout(() => {
@@ -74,7 +86,7 @@ export const App: React.FC = () => {
         setIsTagDrawerOpen(true);
       }, 150);
     }
-  }, [loadSettings, loadTodos, loadTags, loadNotes]);
+  }, [loadSettings, loadTodos, loadTags, loadNotes, loadClipboardItems]);
 
   // Global Keyboard shortcuts
   useEffect(() => {
@@ -109,6 +121,10 @@ export const App: React.FC = () => {
         e.preventDefault();
         setActiveTab("notes");
       }
+      if ((e.metaKey || e.ctrlKey) && e.key === "3") {
+        e.preventDefault();
+        setActiveTab("clipboard");
+      }
 
       // Cmd+, -> Settings
       if ((e.metaKey || e.ctrlKey) && e.key === ",") {
@@ -139,11 +155,38 @@ export const App: React.FC = () => {
     typeof window !== "undefined" &&
     window.location.search.includes("screenshot");
 
+  if (windowLabel === null) {
+    return null;
+  }
+
+  if (windowLabel === "ball") {
+    return (
+      <div
+        className="w-full h-full bg-transparent"
+      >
+        <div
+          role="button"
+          tabIndex={0}
+          onMouseDown={() => api.startWindowDrag()}
+          onClick={() => api.showMainWindow()}
+          onKeyDown={(event) => {
+            if (event.key === "Enter" || event.key === " ") {
+              event.preventDefault();
+              api.showMainWindow();
+            }
+          }}
+          className="w-full h-full rounded-full floatick-ball flex items-center justify-center select-none cursor-pointer tactile-btn"
+          title="Floatick"
+        >
+          <FloatickBrandMark size={32} glyphOnly />
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div
-      className={`w-full h-full ${
-        isScreenshotMode ? "p-0" : "p-2"
-      } flex flex-col items-center justify-center select-none bg-transparent font-sans`}
+      className="w-full h-full flex flex-col items-center justify-center select-none bg-transparent font-sans"
     >
       {/* Refined Floatick Panel Surface */}
       <div
@@ -169,8 +212,10 @@ export const App: React.FC = () => {
             onOpenTagFilter={handleOpenTagFilter}
             onOpenTagAssignment={handleOpenTagAssignment}
           />
-        ) : (
+        ) : activeTab === "notes" ? (
           <NotePanel onOpenTagFilter={handleOpenTagFilter} />
+        ) : (
+          <ClipboardPanel />
         )}
 
         {/* Settings Drawer */}

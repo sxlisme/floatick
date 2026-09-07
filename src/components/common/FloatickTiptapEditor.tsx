@@ -813,10 +813,27 @@ export const FloatickTiptapEditor: React.FC<FloatickTiptapEditorProps> = ({
     };
   }, [editor, editorRef]);
 
+  const handleEditorSurfaceMouseDown = (event: React.MouseEvent<HTMLDivElement>) => {
+    const target = event.target as HTMLElement;
+    if (target.closest("button,input,textarea,[role='button']")) {
+      return;
+    }
+
+    window.requestAnimationFrame(() => {
+      if (editor && !editor.isDestroyed && !editor.isFocused) {
+        editor.chain().focus("end").run();
+      }
+    });
+  };
+
   return (
-    <div ref={containerRef} className={`relative flex-1 flex flex-col min-h-0 ${className}`}>
+    <div
+      ref={containerRef}
+      onMouseDownCapture={handleEditorSurfaceMouseDown}
+      className={`floatick-editor-shell relative flex-1 flex flex-col min-h-0 select-text ${className}`}
+    >
       {showToolbar && <EditorToolbar editor={editor} />}
-      <EditorContent editor={editor} className="flex-1 overflow-y-auto smooth-scroll pr-1" />
+      <EditorContent editor={editor} className="flex-1 overflow-y-auto smooth-scroll pr-1 cursor-text select-text" />
 
       {/* Floating Slash Command Menu */}
       {showSlashMenu && filteredCommands.length > 0 && (
@@ -895,4 +912,3 @@ export const FloatickTiptapEditor: React.FC<FloatickTiptapEditorProps> = ({
     </div>
   );
 };
-

@@ -1,7 +1,7 @@
-use tauri::{AppHandle, Manager};
+use tauri::{AppHandle, Manager, WebviewWindow};
 use tauri_plugin_autostart::ManagerExt;
 
-use crate::models::{AppSettings, NoteItem, TagWorkspace, TodoItem};
+use crate::models::{AppSettings, ClipboardItem, NoteItem, TagWorkspace, TodoItem};
 use crate::storage;
 
 #[tauri::command]
@@ -45,6 +45,16 @@ pub fn save_notes(notes: Vec<NoteItem>) -> Result<(), String> {
 }
 
 #[tauri::command]
+pub fn get_clipboard_items() -> Result<Vec<ClipboardItem>, String> {
+    storage::load_clipboard_items()
+}
+
+#[tauri::command]
+pub fn save_clipboard_items(items: Vec<ClipboardItem>) -> Result<(), String> {
+    storage::save_clipboard_items(&items)
+}
+
+#[tauri::command]
 pub fn get_settings() -> Result<AppSettings, String> {
     storage::load_settings()
 }
@@ -55,9 +65,35 @@ pub fn save_settings(settings: AppSettings) -> Result<(), String> {
 }
 
 #[tauri::command]
+pub fn apply_presentation_mode(app_handle: AppHandle, presentation_mode: String) {
+    crate::tray::apply_presentation_mode(&app_handle, &presentation_mode);
+}
+
+#[tauri::command]
+pub fn show_main_window(app_handle: AppHandle) {
+    crate::tray::show_window(&app_handle);
+}
+
+#[tauri::command]
+pub fn start_window_drag(window: WebviewWindow) -> Result<(), String> {
+    window.start_dragging().map_err(|e| e.to_string())
+}
+
+#[tauri::command]
+pub fn get_window_label(window: WebviewWindow) -> String {
+    window.label().to_string()
+}
+
+#[tauri::command]
 pub fn hide_window(app_handle: AppHandle) -> Result<(), String> {
     if let Some(window) = app_handle.get_webview_window("main") {
         crate::panel::hide_window(&window).map_err(|e| e.to_string())?;
+        let mode = storage::load_settings()
+            .map(|s| s.presentation_mode)
+            .unwrap_or_else(|_| "transient".to_string());
+        if mode == "ballPersistent" {
+            crate::tray::show_ball(&app_handle);
+        }
     }
     Ok(())
 }

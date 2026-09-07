@@ -10,20 +10,20 @@
   --font-mono: "Fira Code", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
 
   /* Light Theme Tokens (Floatick lightSurface #F9FBFA, ink #11181C, teal #0F8F83) */
-  --color-bg-panel: #F9FBFA;
-  --color-border-panel: rgba(0, 0, 0, 0.08);
+  --color-bg-panel: #F5F5F7;
+  --color-border-panel: rgba(70, 82, 88, 0.18);
   --color-shadow-panel: none;
   
-  --color-bg-elevated: #EFF3F1;
-  --color-bg-elevated-hover: #E2E8E5;
-  --color-bg-drawer: #FFFFFF;
-  --color-border-drawer: rgba(0, 0, 0, 0.08);
+  --color-bg-elevated: #FFFFFF;
+  --color-bg-elevated-hover: #ECEEF1;
+  --color-bg-drawer: #FAFAFC;
+  --color-border-drawer: rgba(70, 82, 88, 0.16);
   
   --color-text-primary: #11181C;
   --color-text-secondary: rgba(17, 24, 28, 0.72);
   --color-text-subtle: rgba(17, 24, 28, 0.52);
   
-  --color-hover-overlay: rgba(0, 0, 0, 0.045);
+  --color-hover-overlay: rgba(25, 34, 39, 0.07);
   --color-scrollbar-thumb: rgba(0, 0, 0, 0.16);
   --color-scrollbar-thumb-hover: rgba(0, 0, 0, 0.30);
   
@@ -36,14 +36,14 @@
 
 .dark {
   /* Scheme A: macOS Native Space Gray (Raycast / Apple Pro dark surface) */
-  --color-bg-panel: #1A1A1C;
-  --color-border-panel: rgba(255, 255, 255, 0.08);
+  --color-bg-panel: #202124;
+  --color-border-panel: rgba(255, 255, 255, 0.15);
   --color-shadow-panel: none;
   
-  --color-bg-elevated: #242427;
-  --color-bg-elevated-hover: #2C2C30;
-  --color-bg-drawer: #222225;
-  --color-border-drawer: rgba(255, 255, 255, 0.08);
+  --color-bg-elevated: #2C2D31;
+  --color-bg-elevated-hover: #36373C;
+  --color-bg-drawer: #292A2E;
+  --color-border-drawer: rgba(255, 255, 255, 0.14);
   
   --color-text-primary: #F5F5F7;
   --color-text-secondary: rgba(240, 240, 245, 0.74);
@@ -87,16 +87,73 @@
     opacity: 0.85;
     line-height: inherit;
   }
+
+  button {
+    appearance: none;
+    -webkit-appearance: none;
+    background: transparent;
+    border: 0;
+    padding: 0;
+    font: inherit;
+  }
 }
 
 /* Floatick Panel Surface */
 .floatick-panel {
-  background-color: var(--color-bg-panel);
+  background: var(--color-bg-panel);
   border: 1px solid var(--color-border-panel);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.82);
   color: var(--color-text-primary);
   /* Dedicated Compositor Layer for 120Hz rendering */
   transform: translateZ(0);
   backface-visibility: hidden;
+}
+
+.floatick-panel::before {
+  content: none;
+}
+
+.dark .floatick-panel {
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.16);
+}
+
+.floatick-ball {
+  background: linear-gradient(145deg, #24383C 0%, #172326 100%);
+  border: 1px solid rgba(64, 87, 90, 0.92);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.16),
+    inset 0 -10px 22px rgba(0, 0, 0, 0.18);
+  color: #2CCCBD;
+}
+
+.dark .floatick-ball {
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.14),
+    inset 0 -10px 22px rgba(0, 0, 0, 0.22);
+}
+
+.tiptap {
+  min-height: 100%;
+  cursor: text;
+  caret-color: var(--color-teal-primary);
+  user-select: text !important;
+  -webkit-user-select: text !important;
+}
+
+.floatick-editor-shell,
+.floatick-editor-shell .ProseMirror,
+.floatick-editor-shell .ProseMirror * {
+  user-select: text !important;
+  -webkit-user-select: text !important;
+}
+
+.floatick-editor-shell .ProseMirror {
+  min-height: 100%;
+  outline: none;
+}
+
+.tiptap p:first-child {
+  min-height: 1.5em;
 }
 
 /* Zero-delay atomic theme switch: suppresses all CSS transitions during theme update to eliminate staggered lag */
@@ -357,4 +414,3 @@
   border-top: 1px solid var(--color-border-panel);
   margin: 1rem 0;
 }
-

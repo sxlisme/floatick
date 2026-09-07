@@ -1,6 +1,6 @@
 use std::sync::Mutex;
 use std::time::Duration;
-use tauri::WebviewWindow;
+use tauri::{Manager, WebviewWindow};
 
 const BLUR_SETTLE_DELAY: Duration = Duration::from_millis(150);
 
@@ -105,12 +105,22 @@ pub(crate) fn on_focus_changed(window: &WebviewWindow, focused: bool) {
                 return;
             }
             let collapse = crate::storage::load_settings()
-                .map(|s| s.collapse_when_clicking_outside)
+                .map(|s| s.collapse_when_clicking_outside && s.presentation_mode != "panelPersistent")
                 .unwrap_or(true);
             if collapse {
                 log::info!(target: "floatick::panel", "hide: settled blur");
+                let app_handle = w.app_handle();
                 if let Err(error) = hide_window(&w) {
                     log::warn!(target: "floatick::panel", "blur hide failed: {error}");
+                }
+                match crate::storage::load_settings()
+                    .map(|s| s.presentation_mode)
+                    .unwrap_or_else(|_| "transient".to_string())
+                    .as_str()
+                {
+                    "ballPersistent" => crate::tray::show_ball(&app_handle),
+                    "transient" => crate::tray::hide_ball(&app_handle),
+                    _ => {}
                 }
             }
         }) {

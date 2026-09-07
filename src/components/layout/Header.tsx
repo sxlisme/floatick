@@ -5,9 +5,11 @@ import { FloatickBrandMark } from "@/components/common/FloatickBrandMark";
 import { useTodoStore } from "@/stores/useTodoStore";
 import { useNoteStore } from "@/stores/useNoteStore";
 import { api } from "@/lib/api";
+import { useClipboardStore } from "@/stores/useClipboardStore";
+import type { MainTab } from "@/types";
 
 interface HeaderProps {
-  activeTab: "todos" | "notes";
+  activeTab: MainTab;
   onOpenSettings: () => void;
 }
 
@@ -22,6 +24,7 @@ export const Header: React.FC<HeaderProps> = ({
   const setActiveScope = useTodoStore((s) => s.setActiveScope);
 
   const notes = useNoteStore((s) => s.notes);
+  const clipboardItems = useClipboardStore((s) => s.items);
 
   const activeTodoCount = todos.filter((t) => !t.completedAt && !t.archivedAt).length;
   const archivedTodoCount = todos.filter((t) => !!t.archivedAt).length;
@@ -32,6 +35,9 @@ export const Header: React.FC<HeaderProps> = ({
   const isArchived = activeScope === "archived";
 
   const statusText = (() => {
+    if (activeTab === "clipboard") {
+      return t("clipboardCount", { count: clipboardItems.length });
+    }
     if (activeTab === "notes") {
       return isArchived
         ? `${t("archive")} · ${archivedNoteCount}`
@@ -53,8 +59,15 @@ export const Header: React.FC<HeaderProps> = ({
     await api.hideWindow();
   };
 
+  const handleDragStart = () => {
+    api.startWindowDrag();
+  };
+
   return (
-    <header className="px-5 pt-[18px] pb-[16px] flex items-center justify-between select-none">
+    <header
+      onMouseDown={handleDragStart}
+      className="px-5 pt-[18px] pb-[16px] flex items-center justify-between select-none cursor-grab active:cursor-grabbing"
+    >
       {/* Left: 38px Brand Mark + Status Text */}
       <div className="flex items-center space-x-[11px] min-w-0 flex-1 mr-2">
         <FloatickBrandMark size={38} />
@@ -67,6 +80,7 @@ export const Header: React.FC<HeaderProps> = ({
       <div className="flex items-center space-x-1 shrink-0 text-[var(--color-text-secondary)]">
         {/* Archive */}
         <button
+          onMouseDown={(event) => event.stopPropagation()}
           onClick={handleToggleArchive}
           title={isArchived ? t("active") : t("archive")}
           className={`w-8 h-8 rounded-lg flex items-center justify-center tactile-btn cursor-pointer ${
@@ -80,6 +94,7 @@ export const Header: React.FC<HeaderProps> = ({
 
         {/* Settings */}
         <button
+          onMouseDown={(event) => event.stopPropagation()}
           onClick={onOpenSettings}
           title={t("settings")}
           className="w-8 h-8 rounded-lg flex items-center justify-center hover:text-[var(--color-text-primary)] hover:bg-[var(--color-hover-overlay)] tactile-btn cursor-pointer"
@@ -89,6 +104,7 @@ export const Header: React.FC<HeaderProps> = ({
 
         {/* Collapse */}
         <button
+          onMouseDown={(event) => event.stopPropagation()}
           onClick={handleCollapse}
           title={t("escToClose")}
           className="w-8 h-8 rounded-lg flex items-center justify-center hover:text-[var(--color-text-primary)] hover:bg-[var(--color-hover-overlay)] tactile-btn cursor-pointer"

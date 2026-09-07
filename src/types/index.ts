@@ -39,12 +39,22 @@ export interface NoteItem {
   archivedAt?: string | null;
 }
 
+export interface ClipboardItem {
+  id: string;
+  content: string;
+  createdAt: string;
+  favoriteAt?: string | null;
+}
+
 export type ThemePreference = 'system' | 'light' | 'dark';
 export type LanguagePreference = 'system' | 'zh' | 'en';
+export type PresentationMode = 'panelPersistent' | 'ballPersistent' | 'transient';
+export type MainTab = 'todos' | 'notes' | 'clipboard';
 
 export interface AppSettings {
   theme: ThemePreference;
   language: LanguagePreference;
   alwaysOnTop: boolean;
   collapseWhenClickingOutside: boolean;
+  presentationMode: PresentationMode;
 }

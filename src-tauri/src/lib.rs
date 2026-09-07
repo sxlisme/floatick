@@ -1,6 +1,8 @@
 pub mod commands;
+mod clipboard;
 pub mod models;
 mod panel;
+mod platform;
 pub mod storage;
 pub mod tray;
 
@@ -25,11 +27,17 @@ pub fn run() {
 
             // Setup macOS Menu Bar System Tray
             tray::setup_tray(app.handle())?;
+            clipboard::start_clipboard_watcher(app.handle().clone());
 
             // Blur / Click-outside handling & initial window position
-            if let Some(window) = app.get_webview_window("main") {
+            if let Some(window) = app.get_webview_window(tray::MAIN_WINDOW_LABEL) {
+                platform::prepare_transparent_window(&window);
+
                 let is_autostart = std::env::args().any(|arg| arg == "--autostart");
-                if !is_autostart {
+                let initial_mode = storage::load_settings()
+                    .map(|s| s.presentation_mode)
+                    .unwrap_or_else(|_| "transient".to_string());
+                if !is_autostart && initial_mode != "ballPersistent" {
                     let app_handle = app.handle().clone();
                     std::thread::spawn(move || {
                         std::thread::sleep(std::time::Duration::from_millis(120));
@@ -38,12 +46,31 @@ pub fn run() {
                             tray::show_window(&h);
                         });
                     });
+                } else if initial_mode == "ballPersistent" {
+                    tray::show_ball(app.handle());
                 }
 
                 let w_clone = window.clone();
                 window.on_window_event(move |event| {
-                    if let WindowEvent::Focused(focused) = event {
-                        panel::on_focus_changed(&w_clone, *focused);
+                    match event {
+                        WindowEvent::Focused(focused) => {
+                            panel::on_focus_changed(&w_clone, *focused);
+                        }
+                        WindowEvent::Moved(position) => {
+                            tray::constrain_window_to_visible_area(&w_clone, Some(*position));
+                        }
+                        _ => {}
+                    }
+                });
+            }
+
+            if let Some(window) = app.get_webview_window(tray::BALL_WINDOW_LABEL) {
+                platform::prepare_transparent_window(&window);
+
+                let w_clone = window.clone();
+                window.on_window_event(move |event| {
+                    if let WindowEvent::Moved(position) = event {
+                        tray::constrain_window_to_visible_area(&w_clone, Some(*position));
                     }
                 });
             }
@@ -57,8 +84,14 @@ pub fn run() {
             commands::save_tags,
             commands::get_notes,
             commands::save_notes,
+            commands::get_clipboard_items,
+            commands::save_clipboard_items,
             commands::get_settings,
             commands::save_settings,
+            commands::apply_presentation_mode,
+            commands::show_main_window,
+            commands::start_window_drag,
+            commands::get_window_label,
             commands::hide_window,
             commands::toggle_window,
             commands::set_always_on_top,

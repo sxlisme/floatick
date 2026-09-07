@@ -1,8 +1,11 @@
 use tauri::{
     menu::{Menu, MenuItem, PredefinedMenuItem},
     tray::{MouseButton, MouseButtonState, TrayIconBuilder, TrayIconEvent},
-    AppHandle, LogicalPosition, Manager, Position, Rect,
+    AppHandle, LogicalPosition, Manager, PhysicalPosition, Position, Rect,
 };
+
+pub const MAIN_WINDOW_LABEL: &str = "main";
+pub const BALL_WINDOW_LABEL: &str = "ball";
 
 pub fn setup_tray(app: &AppHandle) -> Result<(), Box<dyn std::error::Error>> {
     let show_item = MenuItem::with_id(app, "show", "显示 Floatick", true, None::<&str>)?;
@@ -30,7 +33,7 @@ pub fn setup_tray(app: &AppHandle) -> Result<(), Box<dyn std::error::Error>> {
 
     let _tray = TrayIconBuilder::with_id("main-tray")
         .icon(tray_icon)
-        .icon_as_template(true)
+        .icon_as_template(false)
         .title(title_str)
         .menu(&menu)
         .show_menu_on_left_click(false)
@@ -59,7 +62,7 @@ pub fn setup_tray(app: &AppHandle) -> Result<(), Box<dyn std::error::Error>> {
                 match button_state {
                     MouseButtonState::Down => {
                         update_cached_tray_rect(rect);
-                        if let Some(window) = app_handle.get_webview_window("main") {
+                        if let Some(window) = app_handle.get_webview_window(MAIN_WINDOW_LABEL) {
                             crate::panel::tray_pressed(window.is_visible().unwrap_or(false));
                         }
                     }
@@ -202,7 +205,7 @@ pub fn position_window_at_rect(window: &tauri::WebviewWindow, rect: Rect) {
 }
 
 pub fn toggle_window_at_rect(app_handle: &AppHandle, rect: Rect) {
-    if let Some(window) = app_handle.get_webview_window("main") {
+    if let Some(window) = app_handle.get_webview_window(MAIN_WINDOW_LABEL) {
         let is_visible = window.is_visible().unwrap_or(false);
         let action = crate::panel::tray_released(is_visible);
         log::info!(target: "floatick::panel", "tray action: {action:?}, visible={is_visible}");
@@ -222,7 +225,7 @@ pub fn toggle_window_at_rect(app_handle: &AppHandle, rect: Rect) {
 
 pub fn show_window(app_handle: &AppHandle) {
     log::info!(target: "floatick::panel", "show requested");
-    if let Some(window) = app_handle.get_webview_window("main") {
+    if let Some(window) = app_handle.get_webview_window(MAIN_WINDOW_LABEL) {
         crate::panel::cancel_pending_hide();
 
         let mut positioned = false;
@@ -257,6 +260,87 @@ pub fn show_window(app_handle: &AppHandle) {
 
         let _ = window.show();
         let _ = window.set_focus();
+    }
+}
+
+pub fn show_ball(app_handle: &AppHandle) {
+    if let Some(window) = app_handle.get_webview_window(BALL_WINDOW_LABEL) {
+        if !window.is_visible().unwrap_or(false) {
+            if let Ok(Some(monitor)) = window.primary_monitor().or_else(|_| window.current_monitor()) {
+                let scale = monitor.scale_factor();
+                let mon_pos = monitor.position().to_logical::<f64>(scale);
+                let mon_size = monitor.size().to_logical::<f64>(scale);
+                let ball_size = 48.0;
+                let x = mon_pos.x + mon_size.width - ball_size - 18.0;
+                let y = mon_pos.y + (mon_size.height - ball_size) / 2.0;
+                let _ = window.set_position(Position::Logical(LogicalPosition::new(x, y)));
+            }
+        }
+        let _ = window.show();
+    }
+}
+
+pub fn hide_ball(app_handle: &AppHandle) {
+    if let Some(window) = app_handle.get_webview_window(BALL_WINDOW_LABEL) {
+        let _ = window.hide();
+    }
+}
+
+pub fn apply_presentation_mode(app_handle: &AppHandle, mode: &str) {
+    match mode {
+        "panelPersistent" => {
+            hide_ball(app_handle);
+            show_window(app_handle);
+        }
+        "ballPersistent" => {
+            if let Some(window) = app_handle.get_webview_window(MAIN_WINDOW_LABEL) {
+                let _ = crate::panel::hide_window(&window);
+            }
+            show_ball(app_handle);
+        }
+        _ => {
+            hide_ball(app_handle);
+        }
+    }
+}
+
+pub fn constrain_window_to_visible_area(window: &tauri::WebviewWindow, position: Option<PhysicalPosition<i32>>) {
+    let Ok(size) = window.outer_size() else {
+        return;
+    };
+    let Some(monitor) = window
+        .current_monitor()
+        .ok()
+        .flatten()
+        .or_else(|| window.primary_monitor().ok().flatten())
+    else {
+        return;
+    };
+
+    let current_position = match position {
+        Some(pos) => pos,
+        None => match window.outer_position() {
+            Ok(pos) => pos,
+            Err(_) => return,
+        },
+    };
+
+    let mon_pos = monitor.position();
+    let mon_size = monitor.size();
+    let width = size.width as i32;
+    let height = size.height as i32;
+    let half_width = (width / 2).max(1);
+    let half_height = (height / 2).max(1);
+
+    let min_x = mon_pos.x - half_width;
+    let max_x = mon_pos.x + mon_size.width as i32 - half_width;
+    let min_y = mon_pos.y - half_height;
+    let max_y = mon_pos.y + mon_size.height as i32 - half_height;
+
+    let x = current_position.x.clamp(min_x, max_x);
+    let y = current_position.y.clamp(min_y, max_y);
+    if x != current_position.x || y != current_position.y {
+        let _ = window.set_position(Position::Physical(PhysicalPosition::new(x, y)));
     }
 }
 

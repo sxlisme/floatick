@@ -46,6 +46,11 @@ export const TodoItemRow: React.FC<TodoItemRowProps> = ({
 
   const isCompleted = !!todo.completedAt;
   const isArchived = !!todo.archivedAt;
+  const detailPreview = todo.content
+    ?.replace(/<[^>]*>/g, " ")
+    .replace(/[#*_`~>\-[\]]/g, "")
+    .replace(/\s+/g, " ")
+    .trim();
 
   const assignedTagIds = tagsWorkspace.assignments[todo.id] || [];
   const assignedTags = tagsWorkspace.tags.filter((t) => assignedTagIds.includes(t.id));
@@ -122,6 +127,20 @@ export const TodoItemRow: React.FC<TodoItemRowProps> = ({
           </span>
         </div>
       </div>
+
+      {detailPreview && (
+        <div className="pl-[30px] pr-8 pt-0.5 select-text">
+          <p
+            className={`text-[12px] leading-[1.45] line-clamp-2 ${
+              isCompleted
+                ? "text-[var(--color-text-subtle)]"
+                : "text-[var(--color-text-secondary)]"
+            }`}
+          >
+            {detailPreview}
+          </p>
+        </div>
+      )}
 
       {/* Sub-row: Indented 30px (Metadata Line + Floating Hover Action Capsule) */}
       <div className="relative pl-[30px] pt-1 flex items-center justify-between min-h-[26px]">
