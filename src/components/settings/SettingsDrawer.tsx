@@ -12,6 +12,7 @@ import {
 } from "@phosphor-icons/react";
 import { useSettingsStore } from "@/stores/useSettingsStore";
 import { api } from "@/lib/api";
+import { Tooltip } from "@/components/common/Tooltip";
 import type { ThemePreference, LanguagePreference, PresentationMode } from "@/types";
 
 interface SettingsDrawerProps {
@@ -107,14 +108,15 @@ export const SettingsDrawer: React.FC<SettingsDrawerProps> = ({
         <span className="text-[14px] font-semibold text-[var(--color-text-primary)] tracking-tight">
           {t("settingsTitle")}
         </span>
-        <button
-          type="button"
-          onClick={onClose}
-          title={t("escToClose")}
-          className="w-7 h-7 rounded-lg flex items-center justify-center text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] hover:bg-[var(--color-hover-overlay)] transition-colors tactile-btn cursor-pointer"
-        >
-          <X size={16} weight="bold" />
-        </button>
+        <Tooltip content={t("escToClose")}>
+          <button
+            type="button"
+            onClick={onClose}
+            className="w-7 h-7 rounded-lg flex items-center justify-center text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] hover:bg-[var(--color-hover-overlay)] transition-colors tactile-btn cursor-pointer"
+          >
+            <X size={16} weight="bold" />
+          </button>
+        </Tooltip>
       </div>
 
       {/* Settings Body */}
@@ -256,14 +258,15 @@ export const SettingsDrawer: React.FC<SettingsDrawerProps> = ({
                   <span className="min-w-[42px] text-right text-[12px] font-mono text-[var(--color-text-subtle)]">
                     {Math.round(panelScaleDraft * 100)}%
                   </span>
-                  <button
-                    type="button"
-                    onClick={handleResetPanelScale}
-                    title={t("resetPanelScale")}
-                    className="w-7 h-7 rounded-[8px] flex items-center justify-center text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] hover:bg-[var(--color-hover-overlay)] tactile-btn cursor-pointer"
-                  >
-                    <ArrowCounterClockwise size={15} weight="bold" />
-                  </button>
+                  <Tooltip content={t("resetPanelScale")}>
+                    <button
+                      type="button"
+                      onClick={handleResetPanelScale}
+                      className="w-7 h-7 rounded-[8px] flex items-center justify-center text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] hover:bg-[var(--color-hover-overlay)] tactile-btn cursor-pointer"
+                    >
+                      <ArrowCounterClockwise size={15} weight="bold" />
+                    </button>
+                  </Tooltip>
                 </div>
               </div>
               <input
@@ -298,19 +301,20 @@ export const SettingsDrawer: React.FC<SettingsDrawerProps> = ({
               <span className="text-[13px] text-[var(--color-text-primary)]">
                 {t("workingDirectorySectionTitle")}
               </span>
-              <button
-                type="button"
-                onClick={handleCopyPath}
-                title={t("copyPath")}
-                className="flex items-center space-x-1.5 px-2 py-1 rounded-md text-[12px] font-mono text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] hover:bg-[var(--color-hover-overlay)] transition-colors cursor-pointer tactile-btn"
-              >
-                <span>~/.floatick</span>
-                {copiedPath ? (
-                  <Check size={13} weight="bold" className="text-[var(--color-teal-primary)]" />
-                ) : (
-                  <Copy size={13} weight="regular" className="text-[var(--color-text-subtle)]" />
-                )}
-              </button>
+              <Tooltip content={copiedPath ? t("copied") : t("copyPath")}>
+                <button
+                  type="button"
+                  onClick={handleCopyPath}
+                  className="flex items-center space-x-1.5 px-2 py-1 rounded-md text-[12px] font-mono text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] hover:bg-[var(--color-hover-overlay)] transition-colors cursor-pointer tactile-btn"
+                >
+                  <span>~/.floatick</span>
+                  {copiedPath ? (
+                    <Check size={13} weight="bold" className="text-[var(--color-teal-primary)]" />
+                  ) : (
+                    <Copy size={13} weight="regular" className="text-[var(--color-text-subtle)]" />
+                  )}
+                </button>
+              </Tooltip>
             </div>
 
             {/* Version */}
@@ -319,7 +323,7 @@ export const SettingsDrawer: React.FC<SettingsDrawerProps> = ({
                 {t("versionLabel")}
               </span>
               <span className="text-[12px] font-mono text-[var(--color-text-subtle)]">
-                v0.5.1
+                v0.5.2
               </span>
             </div>
           </div>

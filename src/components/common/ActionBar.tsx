@@ -1,6 +1,7 @@
 import React from "react";
 import { MagnifyingGlass, X, Tag, Plus } from "@phosphor-icons/react";
 import { useTranslation } from "react-i18next";
+import { Tooltip } from "@/components/common/Tooltip";
 
 interface ActionBarProps {
   query: string;
@@ -38,45 +39,50 @@ export const ActionBar: React.FC<ActionBarProps> = ({
 
         {/* Clear Button */}
         {query && (
-          <button
-            type="button"
-            onClick={() => onQueryChange("")}
-            title={t("clearSearch")}
-            className="w-5 h-5 absolute right-3 rounded-full flex items-center justify-center text-[var(--color-text-subtle)] hover:text-[var(--color-text-primary)] tactile-btn cursor-pointer"
-          >
-            <X size={13} weight="bold" />
-          </button>
+          <div className="absolute right-3 flex items-center">
+            <Tooltip content={t("clearSearch")}>
+              <button
+                type="button"
+                onClick={() => onQueryChange("")}
+                className="w-5 h-5 rounded-full flex items-center justify-center text-[var(--color-text-subtle)] hover:text-[var(--color-text-primary)] tactile-btn cursor-pointer"
+              >
+                <X size={13} weight="bold" />
+              </button>
+            </Tooltip>
+          </div>
         )}
       </div>
 
       {/* Tag Filter Button (42x42) - Clean Icon Button without selected background */}
-      <button
-        type="button"
-        onClick={onOpenTagFilter}
-        title={t("filterByTagTitle")}
-        className={`w-[42px] h-[42px] shrink-0 rounded-[8px] flex items-center justify-center relative tactile-btn cursor-pointer transition-colors ${
-          selectedTagCount > 0
-            ? "text-[var(--color-teal-primary)] hover:bg-[var(--color-hover-overlay)]"
-            : "text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] hover:bg-[var(--color-hover-overlay)]"
-        }`}
-      >
-        <Tag size={20} weight={selectedTagCount > 0 ? "fill" : "regular"} />
-        {selectedTagCount > 0 && (
-          <span className="absolute top-1 right-1 w-4 h-4 rounded-full bg-[var(--color-teal-primary)] text-white text-[10px] font-bold flex items-center justify-center">
-            {selectedTagCount}
-          </span>
-        )}
-      </button>
+      <Tooltip content={t("filterByTagTitle")}>
+        <button
+          type="button"
+          onClick={onOpenTagFilter}
+          className={`w-[42px] h-[42px] shrink-0 rounded-[8px] flex items-center justify-center relative tactile-btn cursor-pointer transition-colors ${
+            selectedTagCount > 0
+              ? "text-[var(--color-teal-primary)] hover:bg-[var(--color-hover-overlay)]"
+              : "text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] hover:bg-[var(--color-hover-overlay)]"
+          }`}
+        >
+          <Tag size={20} weight={selectedTagCount > 0 ? "fill" : "regular"} />
+          {selectedTagCount > 0 && (
+            <span className="absolute top-1 right-1 w-4 h-4 rounded-full bg-[var(--color-teal-primary)] text-white text-[10px] font-bold flex items-center justify-center">
+              {selectedTagCount}
+            </span>
+          )}
+        </button>
+      </Tooltip>
 
       {/* Add Button (42x42) - Clean Icon Button */}
-      <button
-        type="button"
-        onClick={onAddNew}
-        title={addTooltip || t("createTodoAction")}
-        className="w-[42px] h-[42px] shrink-0 rounded-[8px] flex items-center justify-center text-[var(--color-teal-primary)] hover:bg-[var(--color-teal-tint)] tactile-btn cursor-pointer"
-      >
-        <Plus size={22} weight="bold" />
-      </button>
+      <Tooltip content={addTooltip || t("createTodoAction")}>
+        <button
+          type="button"
+          onClick={onAddNew}
+          className="w-[42px] h-[42px] shrink-0 rounded-[8px] flex items-center justify-center text-[var(--color-teal-primary)] hover:bg-[var(--color-teal-tint)] tactile-btn cursor-pointer"
+        >
+          <Plus size={22} weight="bold" />
+        </button>
+      </Tooltip>
     </div>
   );
 };

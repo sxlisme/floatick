@@ -14,7 +14,7 @@ export const ContentSwitcher: React.FC<ContentSwitcherProps> = ({
   const { t } = useTranslation();
 
   return (
-    <div className="px-5 mb-3 select-none">
+    <div className="px-5 pt-3 mb-3 select-none">
       <div className="h-[40px] flex items-center space-x-[3px]">
         {([
           ["todos", t("todos")],

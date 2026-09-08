@@ -14,6 +14,7 @@ import { useNoteStore } from "@/stores/useNoteStore";
 import { useTagStore } from "@/stores/useTagStore";
 import { FloatickTiptapEditor, FloatickEditorHandle } from "@/components/common/FloatickTiptapEditor";
 import { FloatickMarkdown } from "@/components/common/FloatickMarkdown";
+import { Tooltip } from "@/components/common/Tooltip";
 
 interface NoteEditorDrawerProps {
   noteId: string | null;
@@ -192,53 +193,57 @@ export const NoteEditorDrawer: React.FC<NoteEditorDrawerProps> = ({
 
           {note && (
             <div className="flex items-center space-x-1 ml-2 border-l border-[var(--color-border-panel)] pl-2">
-              <button
-                type="button"
-                onClick={() => togglePin(note.id)}
-                title={note.pinnedAt ? t("unpin") : t("pin")}
-                className={`w-6 h-6 rounded flex items-center justify-center transition-colors tactile-btn cursor-pointer ${
-                  note.pinnedAt
-                    ? "text-[var(--color-teal-primary)] bg-[var(--color-teal-tint-active)]"
-                    : "text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)]"
-                }`}
-              >
-                <PushPin size={15} weight={note.pinnedAt ? "fill" : "regular"} />
-              </button>
-              <button
-                type="button"
-                onClick={() => toggleArchive(note.id)}
-                title={note.archivedAt ? t("restore") : t("archive")}
-                className={`w-6 h-6 rounded flex items-center justify-center transition-colors tactile-btn cursor-pointer ${
-                  note.archivedAt
-                    ? "text-amber-500 bg-amber-500/15"
-                    : "text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)]"
-                }`}
-              >
-                <Archive size={15} weight={note.archivedAt ? "fill" : "regular"} />
-              </button>
-              <button
-                type="button"
-                onClick={() => {
-                  deleteNote(note.id);
-                  onClose();
-                }}
-                title={t("delete")}
-                className="w-6 h-6 rounded flex items-center justify-center text-[var(--color-text-secondary)] hover:text-red-400 tactile-btn cursor-pointer"
-              >
-                <Trash size={15} />
-              </button>
+              <Tooltip content={note.pinnedAt ? t("unpin") : t("pin")}>
+                <button
+                  type="button"
+                  onClick={() => togglePin(note.id)}
+                  className={`w-6 h-6 rounded flex items-center justify-center transition-colors tactile-btn cursor-pointer ${
+                    note.pinnedAt
+                      ? "text-[var(--color-teal-primary)] bg-[var(--color-teal-tint-active)]"
+                      : "text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)]"
+                  }`}
+                >
+                  <PushPin size={15} weight={note.pinnedAt ? "fill" : "regular"} />
+                </button>
+              </Tooltip>
+              <Tooltip content={note.archivedAt ? t("restore") : t("archive")}>
+                <button
+                  type="button"
+                  onClick={() => toggleArchive(note.id)}
+                  className={`w-6 h-6 rounded flex items-center justify-center transition-colors tactile-btn cursor-pointer ${
+                    note.archivedAt
+                      ? "text-amber-500 bg-amber-500/15"
+                      : "text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)]"
+                  }`}
+                >
+                  <Archive size={15} weight={note.archivedAt ? "fill" : "regular"} />
+                </button>
+              </Tooltip>
+              <Tooltip content={t("delete")}>
+                <button
+                  type="button"
+                  onClick={() => {
+                    deleteNote(note.id);
+                    onClose();
+                  }}
+                  className="w-6 h-6 rounded flex items-center justify-center text-[var(--color-text-secondary)] hover:text-red-400 tactile-btn cursor-pointer"
+                >
+                  <Trash size={15} />
+                </button>
+              </Tooltip>
             </div>
           )}
         </div>
 
-        <button
-          type="button"
-          onClick={onClose}
-          title={t("escToClose")}
-          className="w-7 h-7 rounded-lg flex items-center justify-center text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] hover:bg-[var(--color-hover-overlay)] transition-colors tactile-btn cursor-pointer"
-        >
-          <X size={16} weight="bold" />
-        </button>
+        <Tooltip content={t("escToClose")}>
+          <button
+            type="button"
+            onClick={onClose}
+            className="w-7 h-7 rounded-lg flex items-center justify-center text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] hover:bg-[var(--color-hover-overlay)] transition-colors tactile-btn cursor-pointer"
+          >
+            <X size={16} weight="bold" />
+          </button>
+        </Tooltip>
       </div>
 
       {/* Main Content Area */}
@@ -364,19 +369,20 @@ export const NoteEditorDrawer: React.FC<NoteEditorDrawerProps> = ({
           <div className="px-5 pb-3 flex items-center flex-wrap gap-1.5 shrink-0">
             {/* Tag Selector Trigger Button */}
             <div className="relative">
-              <button
-                type="button"
-                onClick={() => setShowTagMenu(!showTagMenu)}
-                title={t("tags")}
-                className={`h-[26px] px-2.5 rounded-md flex items-center space-x-1.5 text-[11.5px] font-medium transition-colors tactile-btn cursor-pointer ${
-                  selectedTagIds.length > 0
-                    ? "text-[var(--color-teal-primary)] bg-[var(--color-teal-tint-active)]"
-                    : "text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] bg-[var(--color-hover-overlay)] hover:bg-[var(--color-hover-overlay)]/80"
-                }`}
-              >
-                <Tag size={13} weight={selectedTagIds.length > 0 ? "fill" : "regular"} />
-                <span>{t("tags")}</span>
-              </button>
+              <Tooltip content={t("tags")}>
+                <button
+                  type="button"
+                  onClick={() => setShowTagMenu(!showTagMenu)}
+                  className={`h-[26px] px-2.5 rounded-md flex items-center space-x-1.5 text-[11.5px] font-medium transition-colors tactile-btn cursor-pointer ${
+                    selectedTagIds.length > 0
+                      ? "text-[var(--color-teal-primary)] bg-[var(--color-teal-tint-active)]"
+                      : "text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] bg-[var(--color-hover-overlay)] hover:bg-[var(--color-hover-overlay)]/80"
+                  }`}
+                >
+                  <Tag size={13} weight={selectedTagIds.length > 0 ? "fill" : "regular"} />
+                  <span>{t("tags")}</span>
+                </button>
+              </Tooltip>
 
               {/* Tag Dropdown Popover */}
               {showTagMenu && (
@@ -429,25 +435,25 @@ export const NoteEditorDrawer: React.FC<NoteEditorDrawerProps> = ({
               const tag = tagsWorkspace.tags.find((t) => t.id === tagId);
               if (!tag) return null;
               return (
-                <button
-                  key={tag.id}
-                  type="button"
-                  onClick={() => toggleTag(tag.id)}
-                  title={tag.name}
-                  className="inline-flex items-center space-x-1.5 h-[26px] px-2 rounded-md text-[11px] font-medium shrink-0 transition-opacity hover:opacity-80 tactile-btn cursor-pointer"
-                  style={{
-                    backgroundColor: `${tag.colorHex}18`,
-                    border: `1px solid ${tag.colorHex}35`,
-                    color: tag.colorHex,
-                  }}
-                >
-                  <span
-                    className="w-1.5 h-1.5 rounded-full shrink-0"
-                    style={{ backgroundColor: tag.colorHex }}
-                  />
-                  <span className="truncate max-w-[90px]">{tag.name}</span>
-                  <X size={10} weight="bold" className="ml-0.5 opacity-60 hover:opacity-100" />
-                </button>
+                <Tooltip key={tag.id} content={t("removeTag")}>
+                  <button
+                    type="button"
+                    onClick={() => toggleTag(tag.id)}
+                    className="inline-flex items-center space-x-1.5 h-[26px] px-2 rounded-md text-[11px] font-medium shrink-0 transition-opacity hover:opacity-80 tactile-btn cursor-pointer"
+                    style={{
+                      backgroundColor: `${tag.colorHex}18`,
+                      border: `1px solid ${tag.colorHex}35`,
+                      color: tag.colorHex,
+                    }}
+                  >
+                    <span
+                      className="w-1.5 h-1.5 rounded-full shrink-0"
+                      style={{ backgroundColor: tag.colorHex }}
+                    />
+                    <span className="truncate max-w-[90px]">{tag.name}</span>
+                    <X size={10} weight="bold" className="ml-0.5 opacity-60 hover:opacity-100" />
+                  </button>
+                </Tooltip>
               );
             })}
           </div>

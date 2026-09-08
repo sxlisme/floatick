@@ -14,6 +14,7 @@ import {
 } from "@phosphor-icons/react";
 import { useClipboardStore } from "@/stores/useClipboardStore";
 import { formatTime, getGroupLabel } from "@/lib/dateUtils";
+import { Tooltip } from "@/components/common/Tooltip";
 
 const PAGE_SIZE = 20;
 
@@ -144,18 +145,19 @@ export const ClipboardPanel: React.FC = () => {
           <ClipboardText size={16} weight="bold" className="absolute left-3 text-[var(--color-text-subtle)] pointer-events-none" />
         </div>
 
-        <button
-          type="button"
-          onClick={() => setShowFavoritesOnly(!showFavoritesOnly)}
-          title={t("favoritesOnly")}
-          className={`w-[42px] h-[42px] shrink-0 rounded-[8px] flex items-center justify-center tactile-btn cursor-pointer transition-colors ${
-            showFavoritesOnly
-              ? "text-[var(--color-teal-primary)] bg-[var(--color-teal-tint)]"
-              : "text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] hover:bg-[var(--color-hover-overlay)]"
-          }`}
-        >
-          <Star size={20} weight={showFavoritesOnly ? "fill" : "regular"} />
-        </button>
+        <Tooltip content={t("favoritesOnly")}>
+          <button
+            type="button"
+            onClick={() => setShowFavoritesOnly(!showFavoritesOnly)}
+            className={`w-[42px] h-[42px] shrink-0 rounded-[8px] flex items-center justify-center tactile-btn cursor-pointer transition-colors ${
+              showFavoritesOnly
+                ? "text-[var(--color-teal-primary)] bg-[var(--color-teal-tint)]"
+                : "text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] hover:bg-[var(--color-hover-overlay)]"
+            }`}
+          >
+            <Star size={20} weight={showFavoritesOnly ? "fill" : "regular"} />
+          </button>
+        </Tooltip>
       </div>
 
       {filteredItems.length > 0 && (
@@ -228,50 +230,54 @@ export const ClipboardPanel: React.FC = () => {
                     }`}
                   >
                     <div className="flex items-start gap-2">
-                      <button
-                        type="button"
-                        onClick={() => toggleSelected(item.id)}
-                        title={selectedIds.has(item.id) ? t("clearSelection") : t("select")}
-                        className="w-6 h-6 mt-0.5 rounded flex items-center justify-center text-[var(--color-text-subtle)] hover:text-[var(--color-teal-primary)] hover:bg-[var(--color-hover-overlay)] tactile-btn cursor-pointer shrink-0"
-                      >
-                        {selectedIds.has(item.id) ? (
-                          <CheckSquare size={15} weight="fill" className="text-[var(--color-teal-primary)]" />
-                        ) : (
-                          <Square size={15} />
-                        )}
-                      </button>
+                      <Tooltip content={selectedIds.has(item.id) ? t("clearSelection") : t("select")}>
+                        <button
+                          type="button"
+                          onClick={() => toggleSelected(item.id)}
+                          className="w-6 h-6 mt-0.5 rounded flex items-center justify-center text-[var(--color-text-subtle)] hover:text-[var(--color-teal-primary)] hover:bg-[var(--color-hover-overlay)] tactile-btn cursor-pointer shrink-0"
+                        >
+                          {selectedIds.has(item.id) ? (
+                            <CheckSquare size={15} weight="fill" className="text-[var(--color-teal-primary)]" />
+                          ) : (
+                            <Square size={15} />
+                          )}
+                        </button>
+                      </Tooltip>
                       <p className="flex-1 min-w-0 text-[12.5px] leading-[1.48] text-[var(--color-text-primary)] line-clamp-3 select-text whitespace-pre-wrap break-words">
                         {item.content}
                       </p>
                       <div className="flex items-center gap-0.5 shrink-0 opacity-60 group-hover:opacity-100 transition-opacity">
-                        <button
-                          type="button"
-                          onClick={() => toggleFavorite(item.id)}
-                          title={item.favoriteAt ? t("unfavorite") : t("favorite")}
-                          className={`w-6 h-6 rounded flex items-center justify-center tactile-btn cursor-pointer ${
-                            item.favoriteAt
-                              ? "text-[var(--color-teal-primary)]"
-                              : "text-[var(--color-text-subtle)] hover:text-[var(--color-text-primary)] hover:bg-[var(--color-hover-overlay)]"
-                          }`}
-                        >
-                          <Star size={14} weight={item.favoriteAt ? "fill" : "regular"} />
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => handleCopy(item.content)}
-                          title={t("copy")}
-                          className="w-6 h-6 rounded flex items-center justify-center text-[var(--color-text-subtle)] hover:text-[var(--color-text-primary)] hover:bg-[var(--color-hover-overlay)] tactile-btn cursor-pointer"
-                        >
-                          <Copy size={14} />
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => setPendingDeleteIds([item.id])}
-                          title={t("delete")}
-                          className="w-6 h-6 rounded flex items-center justify-center text-[var(--color-text-subtle)] hover:text-[#EF4444] hover:bg-[#EF4444]/10 tactile-btn cursor-pointer"
-                        >
-                          <Trash size={14} />
-                        </button>
+                        <Tooltip content={item.favoriteAt ? t("unfavorite") : t("favorite")}>
+                          <button
+                            type="button"
+                            onClick={() => toggleFavorite(item.id)}
+                            className={`w-6 h-6 rounded flex items-center justify-center tactile-btn cursor-pointer ${
+                              item.favoriteAt
+                                ? "text-[var(--color-teal-primary)]"
+                                : "text-[var(--color-text-subtle)] hover:text-[var(--color-text-primary)] hover:bg-[var(--color-hover-overlay)]"
+                            }`}
+                          >
+                            <Star size={14} weight={item.favoriteAt ? "fill" : "regular"} />
+                          </button>
+                        </Tooltip>
+                        <Tooltip content={t("copy")}>
+                          <button
+                            type="button"
+                            onClick={() => handleCopy(item.content)}
+                            className="w-6 h-6 rounded flex items-center justify-center text-[var(--color-text-subtle)] hover:text-[var(--color-text-primary)] hover:bg-[var(--color-hover-overlay)] tactile-btn cursor-pointer"
+                          >
+                            <Copy size={14} />
+                          </button>
+                        </Tooltip>
+                        <Tooltip content={t("delete")}>
+                          <button
+                            type="button"
+                            onClick={() => setPendingDeleteIds([item.id])}
+                            className="w-6 h-6 rounded flex items-center justify-center text-[var(--color-text-subtle)] hover:text-[#EF4444] hover:bg-[#EF4444]/10 tactile-btn cursor-pointer"
+                          >
+                            <Trash size={14} />
+                          </button>
+                        </Tooltip>
                       </div>
                     </div>
                     <div className="mt-1 text-[11px] font-mono text-[var(--color-text-subtle)]">
@@ -295,27 +301,29 @@ export const ClipboardPanel: React.FC = () => {
             })}
           </span>
           <div className="flex items-center gap-1.5">
-            <button
-              type="button"
-              onClick={() => setPage((value) => Math.max(1, value - 1))}
-              disabled={currentPage <= 1}
-              title={t("previousPage")}
-              className="w-7 h-7 rounded-[8px] flex items-center justify-center text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] hover:bg-[var(--color-hover-overlay)] disabled:opacity-35 disabled:pointer-events-none tactile-btn cursor-pointer"
-            >
-              <CaretLeft size={15} weight="bold" />
-            </button>
+            <Tooltip content={t("previousPage")}>
+              <button
+                type="button"
+                onClick={() => setPage((value) => Math.max(1, value - 1))}
+                disabled={currentPage <= 1}
+                className="w-7 h-7 rounded-[8px] flex items-center justify-center text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] hover:bg-[var(--color-hover-overlay)] disabled:opacity-35 disabled:pointer-events-none tactile-btn cursor-pointer"
+              >
+                <CaretLeft size={15} weight="bold" />
+              </button>
+            </Tooltip>
             <span className="min-w-[56px] text-center text-[12px] font-mono text-[var(--color-text-secondary)]">
               {t("pageIndicator", { page: currentPage, total: totalPages })}
             </span>
-            <button
-              type="button"
-              onClick={() => setPage((value) => Math.min(totalPages, value + 1))}
-              disabled={currentPage >= totalPages}
-              title={t("nextPage")}
-              className="w-7 h-7 rounded-[8px] flex items-center justify-center text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] hover:bg-[var(--color-hover-overlay)] disabled:opacity-35 disabled:pointer-events-none tactile-btn cursor-pointer"
-            >
-              <CaretRight size={15} weight="bold" />
-            </button>
+            <Tooltip content={t("nextPage")}>
+              <button
+                type="button"
+                onClick={() => setPage((value) => Math.min(totalPages, value + 1))}
+                disabled={currentPage >= totalPages}
+                className="w-7 h-7 rounded-[8px] flex items-center justify-center text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] hover:bg-[var(--color-hover-overlay)] disabled:opacity-35 disabled:pointer-events-none tactile-btn cursor-pointer"
+              >
+                <CaretRight size={15} weight="bold" />
+              </button>
+            </Tooltip>
           </div>
         </div>
       )}
@@ -340,13 +348,15 @@ export const ClipboardPanel: React.FC = () => {
                   {t("deleteClipboardConfirmMessage")}
                 </p>
               </div>
-              <button
-                type="button"
-                onClick={() => setPendingDeleteIds(null)}
-                className="w-7 h-7 rounded-[8px] flex items-center justify-center text-[var(--color-text-subtle)] hover:text-[var(--color-text-primary)] hover:bg-[var(--color-hover-overlay)] tactile-btn cursor-pointer shrink-0"
-              >
-                <X size={15} weight="bold" />
-              </button>
+              <Tooltip content={t("close")}>
+                <button
+                  type="button"
+                  onClick={() => setPendingDeleteIds(null)}
+                  className="w-7 h-7 rounded-[8px] flex items-center justify-center text-[var(--color-text-subtle)] hover:text-[var(--color-text-primary)] hover:bg-[var(--color-hover-overlay)] tactile-btn cursor-pointer shrink-0"
+                >
+                  <X size={15} weight="bold" />
+                </button>
+              </Tooltip>
             </div>
             <div className="px-4 py-3 border-t border-[var(--color-border-panel)] flex justify-end gap-2">
               <button

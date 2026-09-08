@@ -24,6 +24,7 @@ import {
   parseISO,
 } from "date-fns";
 import { zhCN, enUS } from "date-fns/locale";
+import { Tooltip } from "@/components/common/Tooltip";
 
 interface TodoDeadlinePickerProps {
   initialDueAt?: string | null;
@@ -101,12 +102,15 @@ export const TodoDeadlinePicker: React.FC<TodoDeadlinePickerProps> = ({
           <span className="text-xs font-semibold tracking-tight text-[var(--color-text-primary)]">
             {t("setDeadline")}
           </span>
-          <button
-            onClick={onClose}
-            className="w-7 h-7 rounded-full flex items-center justify-center text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] hover:bg-[var(--color-hover-overlay)] transition-colors mui-ripple"
-          >
-            <X size={15} weight="bold" />
-          </button>
+          <Tooltip content={t("close")}>
+            <button
+              type="button"
+              onClick={onClose}
+              className="w-7 h-7 rounded-full flex items-center justify-center text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] hover:bg-[var(--color-hover-overlay)] transition-colors mui-ripple"
+            >
+              <X size={15} weight="bold" />
+            </button>
+          </Tooltip>
         </div>
 
         {/* Month Navigation */}
@@ -115,20 +119,24 @@ export const TodoDeadlinePicker: React.FC<TodoDeadlinePickerProps> = ({
             {format(currentMonth, t("dateFormatMonthYear"), { locale: dateLocale })}
           </span>
           <div className="flex items-center space-x-1">
-            <button
-              type="button"
-              onClick={handlePrevMonth}
-              className="w-7 h-7 rounded-full flex items-center justify-center text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] hover:bg-[var(--color-hover-overlay)] transition-colors mui-ripple"
-            >
-              <CaretLeft size={16} weight="bold" />
-            </button>
-            <button
-              type="button"
-              onClick={handleNextMonth}
-              className="w-7 h-7 rounded-full flex items-center justify-center text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] hover:bg-[var(--color-hover-overlay)] transition-colors mui-ripple"
-            >
-              <CaretRight size={16} weight="bold" />
-            </button>
+            <Tooltip content={t("previousMonth")}>
+              <button
+                type="button"
+                onClick={handlePrevMonth}
+                className="w-7 h-7 rounded-full flex items-center justify-center text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] hover:bg-[var(--color-hover-overlay)] transition-colors mui-ripple"
+              >
+                <CaretLeft size={16} weight="bold" />
+              </button>
+            </Tooltip>
+            <Tooltip content={t("nextMonth")}>
+              <button
+                type="button"
+                onClick={handleNextMonth}
+                className="w-7 h-7 rounded-full flex items-center justify-center text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] hover:bg-[var(--color-hover-overlay)] transition-colors mui-ripple"
+              >
+                <CaretRight size={16} weight="bold" />
+              </button>
+            </Tooltip>
           </div>
         </div>
 
@@ -221,14 +229,15 @@ export const TodoDeadlinePicker: React.FC<TodoDeadlinePickerProps> = ({
             <div />
           )}
 
-          <button
-            type="button"
-            onClick={handleSave}
-            title={t("save")}
-            className="w-8 h-8 rounded-lg flex items-center justify-center text-[var(--color-teal-primary)] hover:bg-[var(--color-teal-tint)] transition-colors tactile-btn cursor-pointer"
-          >
-            <Check size={20} weight="bold" />
-          </button>
+          <Tooltip content={t("save")}>
+            <button
+              type="button"
+              onClick={handleSave}
+              className="w-8 h-8 rounded-lg flex items-center justify-center text-[var(--color-teal-primary)] hover:bg-[var(--color-teal-tint)] transition-colors tactile-btn cursor-pointer"
+            >
+              <Check size={20} weight="bold" />
+            </button>
+          </Tooltip>
         </div>
       </div>
     </div>

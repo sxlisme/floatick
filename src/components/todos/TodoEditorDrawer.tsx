@@ -15,6 +15,7 @@ import { TodoDeadlinePicker } from "./TodoDeadlinePicker";
 import { FloatickTiptapEditor, FloatickEditorHandle } from "@/components/common/FloatickTiptapEditor";
 import { FloatickMarkdown } from "@/components/common/FloatickMarkdown";
 import { formatDeadline } from "@/lib/dateUtils";
+import { Tooltip } from "@/components/common/Tooltip";
 
 interface TodoEditorDrawerProps {
   todoId: string | null;
@@ -209,14 +210,15 @@ export const TodoEditorDrawer: React.FC<TodoEditorDrawerProps> = ({
           )}
         </div>
 
-        <button
-          type="button"
-          onClick={onClose}
-          title={t("escToClose")}
-          className="w-7 h-7 rounded-lg flex items-center justify-center text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] hover:bg-[var(--color-hover-overlay)] transition-colors tactile-btn cursor-pointer"
-        >
-          <X size={16} weight="bold" />
-        </button>
+        <Tooltip content={t("escToClose")}>
+          <button
+            type="button"
+            onClick={onClose}
+            className="w-7 h-7 rounded-lg flex items-center justify-center text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] hover:bg-[var(--color-hover-overlay)] transition-colors tactile-btn cursor-pointer"
+          >
+            <X size={16} weight="bold" />
+          </button>
+        </Tooltip>
       </div>
 
       {/* Main Content Area */}
@@ -357,19 +359,20 @@ export const TodoEditorDrawer: React.FC<TodoEditorDrawerProps> = ({
           <div className="px-5 pb-3 flex items-center flex-wrap gap-1.5 shrink-0">
             {/* Tag Selector Trigger Button */}
             <div className="relative">
-              <button
-                type="button"
-                onClick={() => setShowTagMenu(!showTagMenu)}
-                title={t("tags")}
-                className={`h-[26px] px-2.5 rounded-md flex items-center space-x-1.5 text-[11.5px] font-medium transition-colors tactile-btn cursor-pointer ${
-                  selectedTagIds.length > 0
-                    ? "text-[var(--color-teal-primary)] bg-[var(--color-teal-tint-active)]"
-                    : "text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] bg-[var(--color-hover-overlay)] hover:bg-[var(--color-hover-overlay)]/80"
-                }`}
-              >
-                <Tag size={13} weight={selectedTagIds.length > 0 ? "fill" : "regular"} />
-                <span>{t("tags")}</span>
-              </button>
+              <Tooltip content={t("tags")}>
+                <button
+                  type="button"
+                  onClick={() => setShowTagMenu(!showTagMenu)}
+                  className={`h-[26px] px-2.5 rounded-md flex items-center space-x-1.5 text-[11.5px] font-medium transition-colors tactile-btn cursor-pointer ${
+                    selectedTagIds.length > 0
+                      ? "text-[var(--color-teal-primary)] bg-[var(--color-teal-tint-active)]"
+                      : "text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] bg-[var(--color-hover-overlay)] hover:bg-[var(--color-hover-overlay)]/80"
+                  }`}
+                >
+                  <Tag size={13} weight={selectedTagIds.length > 0 ? "fill" : "regular"} />
+                  <span>{t("tags")}</span>
+                </button>
+              </Tooltip>
 
               {/* Tag Dropdown Popover */}
               {showTagMenu && (
@@ -422,35 +425,32 @@ export const TodoEditorDrawer: React.FC<TodoEditorDrawerProps> = ({
               const tag = tagsWorkspace.tags.find((t) => t.id === tagId);
               if (!tag) return null;
               return (
-                <button
-                  key={tag.id}
-                  type="button"
-                  onClick={() => toggleTag(tag.id)}
-                  title={tag.name}
-                  className="inline-flex items-center space-x-1.5 h-[26px] px-2 rounded-md text-[11px] font-medium shrink-0 transition-opacity hover:opacity-80 tactile-btn cursor-pointer"
-                  style={{
-                    backgroundColor: `${tag.colorHex}18`,
-                    border: `1px solid ${tag.colorHex}35`,
-                    color: tag.colorHex,
-                  }}
-                >
-                  <span
-                    className="w-1.5 h-1.5 rounded-full shrink-0"
-                    style={{ backgroundColor: tag.colorHex }}
-                  />
-                  <span className="truncate max-w-[90px]">{tag.name}</span>
-                  <X size={10} weight="bold" className="ml-0.5 opacity-60 hover:opacity-100" />
-                </button>
+                <Tooltip key={tag.id} content={t("removeTag")}>
+                  <button
+                    type="button"
+                    onClick={() => toggleTag(tag.id)}
+                    className="inline-flex items-center space-x-1.5 h-[26px] px-2 rounded-md text-[11px] font-medium shrink-0 transition-opacity hover:opacity-80 tactile-btn cursor-pointer"
+                    style={{
+                      backgroundColor: `${tag.colorHex}18`,
+                      border: `1px solid ${tag.colorHex}35`,
+                      color: tag.colorHex,
+                    }}
+                  >
+                    <span
+                      className="w-1.5 h-1.5 rounded-full shrink-0"
+                      style={{ backgroundColor: tag.colorHex }}
+                    />
+                    <span className="truncate max-w-[90px]">{tag.name}</span>
+                    <X size={10} weight="bold" className="ml-0.5 opacity-60 hover:opacity-100" />
+                  </button>
+                </Tooltip>
               );
             })}
 
             {/* Deadline Trigger Button */}
             <div className="relative">
-              <button
-                type="button"
-                onClick={() => setShowDeadlinePicker(!showDeadlinePicker)}
-                title={dueAt ? t("editDeadline") : t("setDeadline")}
-                className={`h-[26px] px-2.5 rounded-md flex items-center space-x-1.5 text-[11.5px] font-medium transition-colors tactile-btn cursor-pointer ${
+              <div
+                className={`h-[26px] rounded-md flex items-center text-[11.5px] font-medium transition-colors ${
                   dueAt
                     ? deadlineInfo?.isOverdue
                       ? "text-[#F18A45] bg-[#F18A45]/15 border border-[#F18A45]/30 font-medium"
@@ -458,24 +458,31 @@ export const TodoEditorDrawer: React.FC<TodoEditorDrawerProps> = ({
                     : "text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] bg-[var(--color-hover-overlay)] hover:bg-[var(--color-hover-overlay)]/80"
                 }`}
               >
-                <CalendarBlank size={13} weight={dueAt ? "fill" : "regular"} />
-                <span>
-                  {dueAt ? deadlineInfo?.label : t("deadline")}
-                </span>
-                {dueAt && (
-                  <span
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      setDueAt(null);
-                      setReminderAt(null);
-                    }}
-                    className="ml-1 opacity-60 hover:opacity-100 cursor-pointer"
-                    title={t("clearDeadline")}
+                <Tooltip content={dueAt ? t("editDeadline") : t("setDeadline")}>
+                  <button
+                    type="button"
+                    onClick={() => setShowDeadlinePicker(!showDeadlinePicker)}
+                    className="h-full pl-2.5 pr-2 flex items-center space-x-1.5 tactile-btn cursor-pointer"
                   >
-                    <X size={10} weight="bold" />
-                  </span>
+                    <CalendarBlank size={13} weight={dueAt ? "fill" : "regular"} />
+                    <span>{dueAt ? deadlineInfo?.label : t("deadline")}</span>
+                  </button>
+                </Tooltip>
+                {dueAt && (
+                  <Tooltip content={t("clearDeadline")}>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setDueAt(null);
+                        setReminderAt(null);
+                      }}
+                      className="h-full pl-1 pr-2 flex items-center opacity-60 hover:opacity-100 tactile-btn cursor-pointer"
+                    >
+                      <X size={10} weight="bold" />
+                    </button>
+                  </Tooltip>
                 )}
-              </button>
+              </div>
             </div>
           </div>
 

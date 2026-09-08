@@ -15,6 +15,7 @@ import type { TodoItem } from "@/types";
 import { useTodoStore } from "@/stores/useTodoStore";
 import { useTagStore } from "@/stores/useTagStore";
 import { formatDeadline, formatTime } from "@/lib/dateUtils";
+import { Tooltip } from "@/components/common/Tooltip";
 
 interface TodoItemRowProps {
   todo: TodoItem;
@@ -95,20 +96,22 @@ export const TodoItemRow: React.FC<TodoItemRowProps> = ({
       <div className="flex items-center min-h-[26px]">
         {/* 16x16 Checkbox with r=4px, border=1.3px, optically centered with text */}
         <div className="shrink-0 flex items-center justify-center p-1">
-          <button
-            type="button"
-            onClick={(e) => {
-              e.stopPropagation();
-              toggleComplete(todo.id);
-            }}
-            className={`w-[16px] h-[16px] translate-y-[1px] rounded-[4px] flex items-center justify-center border-[1.3px] transition-all tactile-btn cursor-pointer ${
-              isCompleted
-                ? "bg-[var(--color-teal-primary)] border-[var(--color-teal-primary)] text-white"
-                : "border-[var(--color-text-subtle)] hover:border-[var(--color-teal-primary)] bg-transparent"
-            }`}
-          >
-            {isCompleted && <Check size={11} weight="bold" />}
-          </button>
+          <Tooltip content={isCompleted ? t("markIncomplete") : t("markComplete")}>
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                toggleComplete(todo.id);
+              }}
+              className={`w-[16px] h-[16px] translate-y-[1px] rounded-[4px] flex items-center justify-center border-[1.3px] transition-all tactile-btn cursor-pointer ${
+                isCompleted
+                  ? "bg-[var(--color-teal-primary)] border-[var(--color-teal-primary)] text-white"
+                  : "border-[var(--color-text-subtle)] hover:border-[var(--color-teal-primary)] bg-transparent"
+              }`}
+            >
+              {isCompleted && <Check size={11} weight="bold" />}
+            </button>
+          </Tooltip>
         </div>
 
         {/* SizedBox(width: 6) */}
@@ -165,38 +168,39 @@ export const TodoItemRow: React.FC<TodoItemRowProps> = ({
 
           {/* FloatickTagChip without background and border */}
           {assignedTags.map((tag) => (
-            <button
-              key={tag.id}
-              type="button"
-              onClick={() => onOpenTagAssignment(todo)}
-              title={tag.name}
-              className="inline-flex items-center space-x-1 px-1.5 py-0.5 rounded text-[11px] font-medium shrink-0 transition-all hover:bg-[var(--color-hover-overlay)] tactile-btn cursor-pointer"
-              style={{
-                color: tag.colorHex,
-              }}
-            >
-              <span
-                className="w-1.5 h-1.5 rounded-full shrink-0"
-                style={{ backgroundColor: tag.colorHex }}
-              />
-              <span className="truncate max-w-[90px]">{tag.name}</span>
-            </button>
+            <Tooltip key={tag.id} content={t("assignTagsTooltip")}>
+              <button
+                type="button"
+                onClick={() => onOpenTagAssignment(todo)}
+                className="inline-flex items-center space-x-1 px-1.5 py-0.5 rounded text-[11px] font-medium shrink-0 transition-all hover:bg-[var(--color-hover-overlay)] tactile-btn cursor-pointer"
+                style={{
+                  color: tag.colorHex,
+                }}
+              >
+                <span
+                  className="w-1.5 h-1.5 rounded-full shrink-0"
+                  style={{ backgroundColor: tag.colorHex }}
+                />
+                <span className="truncate max-w-[90px]">{tag.name}</span>
+              </button>
+            </Tooltip>
           ))}
 
           {/* Tag Quick Selection Icon Button (Flutter: assign-tags-$todoId) */}
           {!isArchived && (
-            <button
-              type="button"
-              onClick={() => onOpenTagAssignment(todo)}
-              title={t("assignTagsTooltip") || "分配标签"}
-              className={`w-5 h-5 rounded flex items-center justify-center shrink-0 tactile-btn cursor-pointer ${
-                assignedTags.length > 0
-                  ? "text-[var(--color-teal-primary)] hover:bg-[var(--color-teal-tint)]"
-                  : "text-[var(--color-text-subtle)] hover:text-[var(--color-text-primary)] hover:bg-[var(--color-hover-overlay)]"
-              }`}
-            >
-              <Tag size={13} weight={assignedTags.length > 0 ? "fill" : "regular"} />
-            </button>
+            <Tooltip content={t("assignTagsTooltip")}>
+              <button
+                type="button"
+                onClick={() => onOpenTagAssignment(todo)}
+                className={`w-5 h-5 rounded flex items-center justify-center shrink-0 tactile-btn cursor-pointer ${
+                  assignedTags.length > 0
+                    ? "text-[var(--color-teal-primary)] hover:bg-[var(--color-teal-tint)]"
+                    : "text-[var(--color-text-subtle)] hover:text-[var(--color-text-primary)] hover:bg-[var(--color-hover-overlay)]"
+                }`}
+              >
+                <Tag size={13} weight={assignedTags.length > 0 ? "fill" : "regular"} />
+              </button>
+            </Tooltip>
           )}
         </div>
 
@@ -220,59 +224,63 @@ export const TodoItemRow: React.FC<TodoItemRowProps> = ({
           {/* Frosted Glass Floating Action Pill */}
           <div className="flex items-center space-x-0.5 px-1 py-0.5 rounded-lg bg-[var(--color-bg-drawer)]/92 dark:bg-[var(--color-bg-drawer)]/92 backdrop-blur-md border border-[var(--color-border-drawer)]/70 shadow-sm">
             {/* Edit button */}
-            <button
-              type="button"
-              onClick={(e) => {
-                e.stopPropagation();
-                onEdit(todo);
-              }}
-              title={t("edit")}
-              className="w-6 h-6 rounded flex items-center justify-center text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] hover:bg-[var(--color-hover-overlay)] tactile-btn cursor-pointer"
-            >
-              <PencilSimple size={14} />
-            </button>
+            <Tooltip content={t("edit")}>
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onEdit(todo);
+                }}
+                className="w-6 h-6 rounded flex items-center justify-center text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] hover:bg-[var(--color-hover-overlay)] tactile-btn cursor-pointer"
+              >
+                <PencilSimple size={14} />
+              </button>
+            </Tooltip>
 
             {/* Deadline */}
             {!isArchived && (
-              <button
-                type="button"
-                onClick={() => onOpenDeadlinePicker(todo)}
-                title={todo.dueAt ? t("editDeadline") : t("setDeadline")}
-                className={`w-6 h-6 rounded flex items-center justify-center tactile-btn cursor-pointer ${
-                  todo.dueAt
-                    ? "text-[var(--color-teal-primary)]"
-                    : "text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] hover:bg-[var(--color-hover-overlay)]"
-                }`}
-              >
-                <Clock size={15} weight={todo.dueAt ? "fill" : "regular"} />
-              </button>
+              <Tooltip content={todo.dueAt ? t("editDeadline") : t("setDeadline")}>
+                <button
+                  type="button"
+                  onClick={() => onOpenDeadlinePicker(todo)}
+                  className={`w-6 h-6 rounded flex items-center justify-center tactile-btn cursor-pointer ${
+                    todo.dueAt
+                      ? "text-[var(--color-teal-primary)]"
+                      : "text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] hover:bg-[var(--color-hover-overlay)]"
+                  }`}
+                >
+                  <Clock size={15} weight={todo.dueAt ? "fill" : "regular"} />
+                </button>
+              </Tooltip>
             )}
 
             {/* Copy */}
-            <button
-              type="button"
-              onClick={handleCopyMarkdown}
-              title={copied ? t("copied") : t("copyMarkdown")}
-              className="w-6 h-6 rounded flex items-center justify-center text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] hover:bg-[var(--color-hover-overlay)] tactile-btn cursor-pointer"
-            >
-              {copied ? (
-                <Check size={14} weight="bold" className="text-[var(--color-teal-primary)]" />
-              ) : (
-                <Copy size={14} />
-              )}
-            </button>
+            <Tooltip content={copied ? t("copied") : t("copyMarkdown")}>
+              <button
+                type="button"
+                onClick={handleCopyMarkdown}
+                className="w-6 h-6 rounded flex items-center justify-center text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] hover:bg-[var(--color-hover-overlay)] tactile-btn cursor-pointer"
+              >
+                {copied ? (
+                  <Check size={14} weight="bold" className="text-[var(--color-teal-primary)]" />
+                ) : (
+                  <Copy size={14} />
+                )}
+              </button>
+            </Tooltip>
 
             {/* More actions */}
             <div className="relative">
-              <button
-                ref={moreButtonRef}
-                type="button"
-                onClick={handleToggleMenu}
-                title={t("moreActions")}
-                className="w-6 h-6 rounded flex items-center justify-center text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] hover:bg-[var(--color-hover-overlay)] tactile-btn cursor-pointer"
-              >
-                <DotsThree size={18} weight="bold" />
-              </button>
+              <Tooltip content={t("moreActions")}>
+                <button
+                  ref={moreButtonRef}
+                  type="button"
+                  onClick={handleToggleMenu}
+                  className="w-6 h-6 rounded flex items-center justify-center text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] hover:bg-[var(--color-hover-overlay)] tactile-btn cursor-pointer"
+                >
+                  <DotsThree size={18} weight="bold" />
+                </button>
+              </Tooltip>
 
               {showMenu && (
                 <>

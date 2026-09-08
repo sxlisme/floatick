@@ -5,6 +5,7 @@ import type { NoteItem } from "@/types";
 import { useNoteStore } from "@/stores/useNoteStore";
 import { useTagStore } from "@/stores/useTagStore";
 import { formatTime } from "@/lib/dateUtils";
+import { Tooltip } from "@/components/common/Tooltip";
 
 interface NoteItemRowProps {
   note: NoteItem;
@@ -75,45 +76,49 @@ export const NoteItemRow: React.FC<NoteItemRowProps> = ({ note, onView, onEdit }
           onClick={(e) => e.stopPropagation()}
         >
           <div className="flex items-center space-x-0.5 px-1 py-0.5 rounded-lg bg-[var(--color-bg-drawer)]/92 dark:bg-[var(--color-bg-drawer)]/92 backdrop-blur-md border border-[var(--color-border-drawer)]/70 shadow-sm">
-            <button
-              type="button"
-              onClick={(e) => {
-                e.stopPropagation();
-                onEdit(note);
-              }}
-              title={t("edit")}
-              className="w-6 h-6 rounded flex items-center justify-center text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] hover:bg-[var(--color-hover-overlay)] tactile-btn cursor-pointer"
-            >
-              <PencilSimple size={14} />
-            </button>
-            <button
-              type="button"
-              onClick={() => togglePin(note.id)}
-              title={isPinned ? t("unpin") : t("pin")}
-              className={`w-6 h-6 rounded flex items-center justify-center transition-colors tactile-btn cursor-pointer ${
-                isPinned
-                  ? "text-[var(--color-teal-primary)] bg-[var(--color-teal-tint-active)]"
-                  : "text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] hover:bg-[var(--color-hover-overlay)]"
-              }`}
-            >
-              <PushPin size={14} weight={isPinned ? "fill" : "regular"} />
-            </button>
-            <button
-              type="button"
-              onClick={() => toggleArchive(note.id)}
-              title={isArchived ? t("restore") : t("archive")}
-              className="w-6 h-6 rounded flex items-center justify-center text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] hover:bg-[var(--color-hover-overlay)] tactile-btn cursor-pointer"
-            >
-              <Archive size={14} weight={isArchived ? "fill" : "regular"} />
-            </button>
-            <button
-              type="button"
-              onClick={() => deleteNote(note.id)}
-              title={t("delete")}
-              className="w-6 h-6 rounded flex items-center justify-center text-[var(--color-text-secondary)] hover:text-red-400 hover:bg-[var(--color-hover-overlay)] tactile-btn cursor-pointer"
-            >
-              <Trash size={14} />
-            </button>
+            <Tooltip content={t("edit")}>
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onEdit(note);
+                }}
+                className="w-6 h-6 rounded flex items-center justify-center text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] hover:bg-[var(--color-hover-overlay)] tactile-btn cursor-pointer"
+              >
+                <PencilSimple size={14} />
+              </button>
+            </Tooltip>
+            <Tooltip content={isPinned ? t("unpin") : t("pin")}>
+              <button
+                type="button"
+                onClick={() => togglePin(note.id)}
+                className={`w-6 h-6 rounded flex items-center justify-center transition-colors tactile-btn cursor-pointer ${
+                  isPinned
+                    ? "text-[var(--color-teal-primary)] bg-[var(--color-teal-tint-active)]"
+                    : "text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] hover:bg-[var(--color-hover-overlay)]"
+                }`}
+              >
+                <PushPin size={14} weight={isPinned ? "fill" : "regular"} />
+              </button>
+            </Tooltip>
+            <Tooltip content={isArchived ? t("restore") : t("archive")}>
+              <button
+                type="button"
+                onClick={() => toggleArchive(note.id)}
+                className="w-6 h-6 rounded flex items-center justify-center text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] hover:bg-[var(--color-hover-overlay)] tactile-btn cursor-pointer"
+              >
+                <Archive size={14} weight={isArchived ? "fill" : "regular"} />
+              </button>
+            </Tooltip>
+            <Tooltip content={t("delete")}>
+              <button
+                type="button"
+                onClick={() => deleteNote(note.id)}
+                className="w-6 h-6 rounded flex items-center justify-center text-[var(--color-text-secondary)] hover:text-red-400 hover:bg-[var(--color-hover-overlay)] tactile-btn cursor-pointer"
+              >
+                <Trash size={14} />
+              </button>
+            </Tooltip>
           </div>
         </div>
       </div>

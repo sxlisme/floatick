@@ -12,6 +12,7 @@ import {
 import { useTagStore } from "@/stores/useTagStore";
 import { useTodoStore } from "@/stores/useTodoStore";
 import { useNoteStore } from "@/stores/useNoteStore";
+import { Tooltip } from "@/components/common/Tooltip";
 
 // Exact TagPalette colors from legacy/flutter/lib/features/todos/presentation/widgets/tag_palette.dart
 const TAG_PALETTE = [
@@ -182,14 +183,15 @@ export const TagDrawer: React.FC<TagDrawerProps> = ({
         <div className="px-4.5 py-3 border-b border-[var(--color-border-drawer)] flex items-center justify-between shrink-0">
           <div className="flex items-center space-x-1.5 min-w-0">
             {mode === "manage" && (
-              <button
-                type="button"
-                onClick={handleBackFromManage}
-                title={returnMode === "assignment" ? t("assignTagsTitle") || "分配标签" : t("filterByTagTitle")}
-                className="w-7 h-7 rounded-lg flex items-center justify-center text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] hover:bg-[var(--color-hover-overlay)] transition-colors tactile-btn cursor-pointer -ml-1.5"
-              >
-                <CaretLeft size={16} weight="bold" />
-              </button>
+              <Tooltip content={returnMode === "assignment" ? t("assignTagsTitle") : t("filterByTagTitle")}>
+                <button
+                  type="button"
+                  onClick={handleBackFromManage}
+                  className="w-7 h-7 rounded-lg flex items-center justify-center text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] hover:bg-[var(--color-hover-overlay)] transition-colors tactile-btn cursor-pointer -ml-1.5"
+                >
+                  <CaretLeft size={16} weight="bold" />
+                </button>
+              </Tooltip>
             )}
             <span className="text-[15px] font-semibold text-[var(--color-text-primary)] tracking-tight truncate">
               {mode === "filter"
@@ -210,13 +212,15 @@ export const TagDrawer: React.FC<TagDrawerProps> = ({
                 {t("manageTags")}
               </button>
             )}
-            <button
-              type="button"
-              onClick={onClose}
-              className="w-7 h-7 rounded-lg flex items-center justify-center text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] hover:bg-[var(--color-hover-overlay)] transition-colors tactile-btn cursor-pointer"
-            >
-              <X size={16} weight="bold" />
-            </button>
+            <Tooltip content={t("close")}>
+              <button
+                type="button"
+                onClick={onClose}
+                className="w-7 h-7 rounded-lg flex items-center justify-center text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] hover:bg-[var(--color-hover-overlay)] transition-colors tactile-btn cursor-pointer"
+              >
+                <X size={16} weight="bold" />
+              </button>
+            </Tooltip>
           </div>
         </div>
 
@@ -356,25 +360,29 @@ export const TagDrawer: React.FC<TagDrawerProps> = ({
 
                 <div className="absolute right-1.5 flex items-center space-x-1">
                   {editingTagId && (
-                    <button
-                      type="button"
-                      onClick={handleCancelEdit}
-                      className="w-6 h-6 rounded-md flex items-center justify-center text-[var(--color-text-subtle)] hover:text-[var(--color-text-primary)] cursor-pointer"
-                    >
-                      <X size={13} weight="bold" />
-                    </button>
+                    <Tooltip content={t("cancel")}>
+                      <button
+                        type="button"
+                        onClick={handleCancelEdit}
+                        className="w-6 h-6 rounded-md flex items-center justify-center text-[var(--color-text-subtle)] hover:text-[var(--color-text-primary)] cursor-pointer"
+                      >
+                        <X size={13} weight="bold" />
+                      </button>
+                    </Tooltip>
                   )}
-                  <button
-                    type="submit"
-                    disabled={!tagNameInput.trim()}
-                    className="w-7 h-7 rounded-lg flex items-center justify-center text-[var(--color-teal-primary)] hover:bg-[var(--color-teal-tint)] transition-colors tactile-btn cursor-pointer disabled:opacity-30 disabled:pointer-events-none"
-                  >
-                    {editingTagId ? (
-                      <Check size={16} weight="bold" />
-                    ) : (
-                      <Plus size={16} weight="bold" />
-                    )}
-                  </button>
+                  <Tooltip content={editingTagId ? t("save") : t("newTag")}>
+                    <button
+                      type="submit"
+                      disabled={!tagNameInput.trim()}
+                      className="w-7 h-7 rounded-lg flex items-center justify-center text-[var(--color-teal-primary)] hover:bg-[var(--color-teal-tint)] transition-colors tactile-btn cursor-pointer disabled:opacity-30 disabled:pointer-events-none"
+                    >
+                      {editingTagId ? (
+                        <Check size={16} weight="bold" />
+                      ) : (
+                        <Plus size={16} weight="bold" />
+                      )}
+                    </button>
+                  </Tooltip>
                 </div>
               </div>
 
@@ -456,39 +464,45 @@ export const TagDrawer: React.FC<TagDrawerProps> = ({
 
                         {isConfirming ? (
                           <div className="flex items-center space-x-1">
-                            <button
-                              type="button"
-                              onClick={() => setConfirmDeleteTagId(null)}
-                              className="w-6 h-6 rounded flex items-center justify-center text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] cursor-pointer"
-                            >
-                              <X size={13} weight="bold" />
-                            </button>
-                            <button
-                              type="button"
-                              onClick={() => handleDelete(tag.id)}
-                              className="w-6 h-6 rounded flex items-center justify-center text-[#E15F5F] hover:bg-[#E15F5F]/15 cursor-pointer"
-                            >
-                              <Check size={14} weight="bold" />
-                            </button>
+                            <Tooltip content={t("cancel")}>
+                              <button
+                                type="button"
+                                onClick={() => setConfirmDeleteTagId(null)}
+                                className="w-6 h-6 rounded flex items-center justify-center text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] cursor-pointer"
+                              >
+                                <X size={13} weight="bold" />
+                              </button>
+                            </Tooltip>
+                            <Tooltip content={t("confirm")}>
+                              <button
+                                type="button"
+                                onClick={() => handleDelete(tag.id)}
+                                className="w-6 h-6 rounded flex items-center justify-center text-[#E15F5F] hover:bg-[#E15F5F]/15 cursor-pointer"
+                              >
+                                <Check size={14} weight="bold" />
+                              </button>
+                            </Tooltip>
                           </div>
                         ) : (
                           <div className="flex items-center space-x-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
-                            <button
-                              type="button"
-                              onClick={() => handleStartEdit(tag)}
-                              title={t("edit")}
-                              className="w-6.5 h-6.5 rounded flex items-center justify-center text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] hover:bg-[var(--color-hover-overlay)] cursor-pointer"
-                            >
-                              <PencilSimple size={14} />
-                            </button>
-                            <button
-                              type="button"
-                              onClick={() => setConfirmDeleteTagId(tag.id)}
-                              title={t("delete")}
-                              className="w-6.5 h-6.5 rounded flex items-center justify-center text-[var(--color-text-secondary)] hover:text-[#E15F5F] hover:bg-[var(--color-hover-overlay)] cursor-pointer"
-                            >
-                              <Trash size={14} />
-                            </button>
+                            <Tooltip content={t("edit")}>
+                              <button
+                                type="button"
+                                onClick={() => handleStartEdit(tag)}
+                                className="w-6.5 h-6.5 rounded flex items-center justify-center text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] hover:bg-[var(--color-hover-overlay)] cursor-pointer"
+                              >
+                                <PencilSimple size={14} />
+                              </button>
+                            </Tooltip>
+                            <Tooltip content={t("delete")}>
+                              <button
+                                type="button"
+                                onClick={() => setConfirmDeleteTagId(tag.id)}
+                                className="w-6.5 h-6.5 rounded flex items-center justify-center text-[var(--color-text-secondary)] hover:text-[#E15F5F] hover:bg-[var(--color-hover-overlay)] cursor-pointer"
+                              >
+                                <Trash size={14} />
+                              </button>
+                            </Tooltip>
                           </div>
                         )}
                       </div>
