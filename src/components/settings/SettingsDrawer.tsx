@@ -106,13 +106,17 @@ export const SettingsDrawer: React.FC<SettingsDrawerProps> = ({
   return (
     <div className="absolute inset-0 z-50 bg-[var(--color-bg-panel)] text-[var(--color-text-primary)] flex flex-col select-none animate-in fade-in duration-150">
       {/* Header */}
-      <div className="h-12 px-4 border-b border-[var(--color-border-panel)] flex items-center justify-between shrink-0 bg-[var(--color-bg-panel)]">
+      <div
+        onMouseDown={() => void api.startWindowDrag()}
+        className="h-12 px-4 border-b border-[var(--color-border-panel)] flex items-center justify-between shrink-0 bg-[var(--color-bg-panel)] cursor-grab active:cursor-grabbing"
+      >
         <span className="text-[14px] font-semibold text-[var(--color-text-primary)] tracking-tight">
           {t("settingsTitle")}
         </span>
         <Tooltip content={t("escToClose")}>
           <button
             type="button"
+            onMouseDown={(event) => event.stopPropagation()}
             onClick={onClose}
             className="w-7 h-7 rounded-lg flex items-center justify-center text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] hover:bg-[var(--color-hover-overlay)] transition-colors tactile-btn cursor-pointer"
           >
