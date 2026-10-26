@@ -107,9 +107,15 @@ pub fn run() {
         .build(tauri::generate_context!())
         .expect("error while building tauri application")
         .run(|app_handle, event| {
-            if let tauri::RunEvent::Reopen { .. } = event {
-                log::info!(target: "floatick::panel", "reopen");
-                tray::show_window(app_handle);
+            #[cfg(target_os = "macos")]
+            {
+                if let tauri::RunEvent::Reopen { .. } = event {
+                    log::info!(target: "floatick::panel", "reopen");
+                    tray::show_window(app_handle);
+                }
             }
+
+            #[cfg(not(target_os = "macos"))]
+            let _ = (app_handle, event);
         });
 }
