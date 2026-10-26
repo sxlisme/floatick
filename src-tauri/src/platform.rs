@@ -108,7 +108,22 @@ pub fn replace_file(source: &std::path::Path, target: &std::path::Path) -> std::
     std::fs::rename(source, target)
 }
 
-#[cfg(not(target_os = "macos"))]
+#[cfg(target_os = "windows")]
+pub fn prepare_transparent_window(window: &tauri::WebviewWindow) {
+    use tauri::window::Color;
+
+    // `None` resets WebView2 to its opaque white default. Keep both the
+    // native window and webview explicitly transparent on Windows.
+    if let Err(error) = window.set_background_color(Some(Color(0, 0, 0, 0))) {
+        log::warn!(
+            target: "floatick::panel",
+            "set transparent background for {} failed: {error}",
+            window.label()
+        );
+    }
+}
+
+#[cfg(not(any(target_os = "macos", target_os = "windows")))]
 pub fn prepare_transparent_window(window: &tauri::WebviewWindow) {
     if let Err(error) = window.set_background_color(None) {
         log::warn!(

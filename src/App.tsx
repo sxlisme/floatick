@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { Header } from "@/components/layout/Header";
 import { ContentSwitcher } from "@/components/layout/ContentSwitcher";
 import { TodoPanel } from "@/components/todos/TodoPanel";
@@ -24,6 +24,8 @@ export const App: React.FC = () => {
   const [isTagDrawerOpen, setIsTagDrawerOpen] = useState(false);
   const [tagDrawerMode, setTagDrawerMode] = useState<"filter" | "assignment" | "manage">("filter");
   const [tagDrawerTargetTodoId, setTagDrawerTargetTodoId] = useState<string | null>(null);
+  const ballPointerStart = useRef<{ x: number; y: number } | null>(null);
+  const ballDragStarted = useRef(false);
 
   const handleOpenTagFilter = () => {
     setTagDrawerMode("filter");
@@ -155,27 +157,63 @@ export const App: React.FC = () => {
     typeof window !== "undefined" &&
     window.location.search.includes("screenshot");
 
+  const handleBallPointerDown = (event: React.PointerEvent<HTMLDivElement>) => {
+    if (event.button !== 0) return;
+    ballPointerStart.current = { x: event.screenX, y: event.screenY };
+    ballDragStarted.current = false;
+    event.currentTarget.setPointerCapture(event.pointerId);
+  };
+
+  const handleBallPointerMove = (event: React.PointerEvent<HTMLDivElement>) => {
+    const start = ballPointerStart.current;
+    if (!start || ballDragStarted.current) return;
+
+    const distance = Math.hypot(event.screenX - start.x, event.screenY - start.y);
+    if (distance >= 4) {
+      ballDragStarted.current = true;
+      void api.startWindowDrag();
+    }
+  };
+
+  const handleBallPointerUp = (event: React.PointerEvent<HTMLDivElement>) => {
+    if (!ballPointerStart.current) return;
+
+    ballPointerStart.current = null;
+    if (event.currentTarget.hasPointerCapture(event.pointerId)) {
+      event.currentTarget.releasePointerCapture(event.pointerId);
+    }
+
+    if (!ballDragStarted.current) {
+      void api.showMainWindow();
+    }
+  };
+
+  const handleBallPointerCancel = () => {
+    ballPointerStart.current = null;
+    ballDragStarted.current = false;
+  };
+
   if (windowLabel === null) {
     return null;
   }
 
   if (windowLabel === "ball") {
     return (
-      <div
-        className="w-full h-full bg-transparent"
-      >
+      <div className="floatick-ball-root">
         <div
           role="button"
           tabIndex={0}
-          onMouseDown={() => api.startWindowDrag()}
-          onClick={() => api.showMainWindow()}
+          onPointerDown={handleBallPointerDown}
+          onPointerMove={handleBallPointerMove}
+          onPointerUp={handleBallPointerUp}
+          onPointerCancel={handleBallPointerCancel}
           onKeyDown={(event) => {
             if (event.key === "Enter" || event.key === " ") {
               event.preventDefault();
-              api.showMainWindow();
+              void api.showMainWindow();
             }
           }}
-          className="w-full h-full rounded-full floatick-ball flex items-center justify-center select-none cursor-pointer tactile-btn"
+          className="floatick-ball flex items-center justify-center select-none cursor-pointer tactile-btn"
           title="Floatick"
         >
           <FloatickBrandMark size={32} glyphOnly />

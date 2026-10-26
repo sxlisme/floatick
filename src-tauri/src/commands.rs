@@ -81,6 +81,7 @@ pub fn apply_presentation_mode(app_handle: AppHandle, presentation_mode: String)
 
 #[tauri::command]
 pub fn show_main_window(app_handle: AppHandle) {
+    crate::tray::hide_ball(&app_handle);
     crate::tray::show_window(&app_handle);
 }
 
