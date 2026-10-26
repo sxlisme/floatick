@@ -135,8 +135,13 @@ jobs:
           (
             cd "$artifact_directory"
             shasum -a 256 --check "$dmg_name.sha256"
-            shasum -a 256 --check "$windows_name.sha256"
           )
+          expected_windows_sha256=$(awk '{print $1}' "$windows_path.sha256" | tr -d '\r')
+          actual_windows_sha256=$(shasum -a 256 "$windows_path" | awk '{print $1}')
+          if [[ "$actual_windows_sha256" != "$expected_windows_sha256" ]]; then
+            echo "Windows installer checksum does not match." >&2
+            exit 1
+          fi
           dmg_sha256=$(awk '{print $1}' "$checksum_path")
           jq -e \
             --arg product "$PRODUCT_NAME" \

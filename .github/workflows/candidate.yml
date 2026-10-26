@@ -86,7 +86,11 @@ jobs:
           $installerPath = Join-Path $artifactDirectory $installerName
           Copy-Item $source.FullName $installerPath
           $sha256 = (Get-FileHash $installerPath -Algorithm SHA256).Hash.ToLowerInvariant()
-          "$sha256  $installerName" | Set-Content "$installerPath.sha256" -Encoding ascii
+          [System.IO.File]::WriteAllText(
+            "$installerPath.sha256",
+            "$sha256  $installerName`n",
+            [System.Text.Encoding]::ASCII
+          )
 
       - name: Upload Windows candidate
         uses: actions/upload-artifact@v7
