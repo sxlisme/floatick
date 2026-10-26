@@ -3,13 +3,14 @@
     <img src="./docs/assets/app-icon.png" width="36" height="36" align="absmiddle" alt="Floatick Icon" />
     Floatick
   </h1>
-  <p><strong>Lightweight Menu Bar Todos & Notes for macOS</strong></p>
+  <p><strong>Lightweight tray-based todos & notes for macOS and Windows</strong></p>
   <p>Capture fast. Finish with focus. Local-first · Fast & Minimal · Open Source</p>
   <p>
-    <a href="https://github.com/lucaslus/floatick/actions/workflows/ci.yml">
-      <img src="https://github.com/lucaslus/floatick/actions/workflows/ci.yml/badge.svg" alt="CI Status" />
+    <a href="https://github.com/sxlisme/floatick/actions/workflows/ci.yml">
+      <img src="https://github.com/sxlisme/floatick/actions/workflows/ci.yml/badge.svg" alt="CI Status" />
     </a>
     <img src="https://img.shields.io/badge/macOS-10.15%2B-111111?logo=apple" alt="macOS 10.15+" />
+    <img src="https://img.shields.io/badge/Windows-10%2B-0078D4?logo=windows" alt="Windows 10+" />
     <img src="https://img.shields.io/badge/Tauri-v2-24C8D8?logo=tauri" alt="Tauri v2" />
     <img src="https://img.shields.io/badge/Rust-1.80%2B-DEA584?logo=rust" alt="Rust 1.80+" />
     <img src="https://img.shields.io/badge/React-19-61DAFB?logo=react" alt="React 19" />
@@ -27,11 +28,11 @@
   <img src="./docs/assets/floatick-showcase.png" width="100%" alt="Floatick Menu Bar Todos, TipTap Markdown Editor, and Quick Notes" />
 </p>
 
-Floatick is a lightweight, local-first productivity app crafted natively for macOS. It rests quietly in your Menu Bar with a live counter badge for pending tasks. One click slides open a focused workspace directly beneath the icon. No heavy setups, no cloud sign-ups—just fast capture and effortless follow-through.
+Floatick is a lightweight, local-first productivity app for macOS and Windows. It rests quietly in your menu bar or notification area. One click opens a focused workspace beside the tray icon. No heavy setup or cloud sign-up, just fast capture and effortless follow-through.
 
 ## Key Features
 
-- **Menu Bar Native**: Sits quietly in your system status bar with a live pending badge. Click to open directly beneath the tray icon without cluttering your Dock.
+- **Native System Tray**: Sits quietly in the macOS menu bar or Windows notification area. Click to open beside the tray icon without cluttering the Dock or taskbar.
 - **Full-Width Cards & Floating Capsules**: Task titles span the full row width without premature truncation. Hovering smoothly reveals frosted action capsules (deadline, edit, copy markdown, delete).
 - **Separated Browsing & Editing**: Check off tasks instantly in the list; open the full TipTap editor drawer on demand via double-click or `⌘N`.
 - **TipTap Markdown & Slash Commands**: Press `/` for interactive checklists, headings, code blocks, and quotes with instant formatting.
@@ -42,7 +43,10 @@ Floatick is a lightweight, local-first productivity app crafted natively for mac
 
 ## Download & Installation
 
-Download the latest DMG installer from [GitHub Releases](https://github.com/lucaslus/floatick/releases) and drag Floatick to your `Applications` folder. The installer is a Universal Binary supporting both Apple silicon (M-series) and Intel Macs.
+Download the latest installer from [GitHub Releases](https://github.com/sxlisme/floatick/releases):
+
+- macOS: use the Universal DMG for both Apple silicon and Intel Macs, then drag Floatick to `Applications`.
+- Windows: use the x64 NSIS setup executable. Windows 10 and later are supported.
 
 > **First-Launch Note for macOS**:
 > If macOS displays an "unidentified developer" warning, open **System Settings → Privacy & Security**, scroll down to **Security**, and click **Open Anyway** (only required on first launch).
@@ -52,13 +56,13 @@ Download the latest DMG installer from [GitHub Releases](https://github.com/luca
 | Action | Shortcut / Gesture | Description |
 | --- | --- | --- |
 | **Toggle Window** | Click Menu Bar Icon | Toggle Floatick panel under the status tray |
-| **New Item** | `⌘N` | Open editor drawer (Todo or Note) |
+| **New Item** | `⌘N` / `Ctrl+N` | Open editor drawer (Todo or Note) |
 | **Edit Item** | Double-click / Hover ✏️ | Open TipTap editor drawer for existing item |
-| **Save & Close** | `⌘ ⏎` (Cmd + Enter) | Save current item and close drawer |
+| **Save & Close** | `⌘ ⏎` / `Ctrl+Enter` | Save current item and close drawer |
 | **Close / Dismiss** | `Esc` | Closes active drawer first, then collapses panel |
-| **Search Workspace** | `⌘F` | Focus search bar |
-| **Switch Tabs** | `Tab` / `⌘1`, `⌘2` | Toggle between Todos and Notes views |
-| **Preferences** | `⌘,` | Open Settings drawer (Theme, autostart, pin) |
+| **Search Workspace** | `⌘F` / `Ctrl+F` | Focus search bar |
+| **Switch Tabs** | `Tab` / `⌘1`, `⌘2` / `Ctrl+1`, `Ctrl+2` | Toggle between Todos and Notes views |
+| **Preferences** | `⌘,` / `Ctrl+,` | Open Settings drawer (Theme, autostart, pin) |
 | **Slash Commands** | Type `/` in editor | Insert task lists, headings, code blocks, quotes |
 | **Set Deadline** | Click ⏰ on hover | Open date & time picker directly on row |
 | **Copy Markdown** | Click ⎘ on hover | Copy title and content as clean Markdown |
@@ -81,7 +85,7 @@ Your data never leaves your computer. Floatick operates completely offline and c
 
 ### Requirements
 
-- macOS 10.15 or later
+- macOS 10.15+ or Windows 10+
 - [Node.js](https://nodejs.org/) 18+ and [pnpm](https://pnpm.io/)
 - [Rust](https://www.rust-lang.org/) (1.80+) and Cargo
 
@@ -98,11 +102,11 @@ pnpm tauri:dev
 ### Production Build
 
 ```bash
-# Build Universal Binary DMG and .app bundle
+# Build the native bundles for the current platform
 pnpm tauri:build
 ```
 
-The output files will be created in `src-tauri/target/release/bundle/macos/` and `.../dmg/`.
+macOS bundles are written under `src-tauri/target/release/bundle/macos/` and `.../dmg/`. Windows installers are written under `src-tauri/target/release/bundle/nsis/`.
 
 ## Project Structure
 
@@ -120,7 +124,7 @@ src/                          # Frontend (React 19 + TypeScript + Vite + Tailwin
   lib/                        # Tauri IPC API bindings
 src-tauri/                    # Native Backend (Rust + Tauri 2.x)
   src/
-    tray.rs                   # macOS Menu Bar tray & magnetic window anchoring
+    tray.rs                   # macOS/Windows system tray & window anchoring
     storage.rs                # Atomic JSON file persistence in ~/.floatick
     commands.rs               # IPC commands exposed to frontend
     lib.rs                    # Window lifecycle & auto-dismiss on blur

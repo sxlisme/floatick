@@ -1,9 +1,9 @@
-name: Release macOS
+name: Release macOS and Windows
 
 on:
   push:
     tags:
-      - 'v*'
+      - "v*"
 
 permissions: {}
 
@@ -123,14 +123,19 @@ jobs:
           dmg_name="$PRODUCT_NAME-$APP_VERSION-macos-universal.dmg"
           dmg_path="$artifact_directory/$dmg_name"
           checksum_path="$dmg_path.sha256"
+          windows_name="$PRODUCT_NAME-$APP_VERSION-windows-x64-setup.exe"
+          windows_path="$artifact_directory/$windows_name"
           manifest_path="$artifact_directory/$PRODUCT_NAME-$APP_VERSION-release-manifest.json"
 
           test -f "$dmg_path"
           test -f "$checksum_path"
+          test -f "$windows_path"
+          test -f "$windows_path.sha256"
           test -f "$manifest_path"
           (
             cd "$artifact_directory"
             shasum -a 256 --check "$dmg_name.sha256"
+            shasum -a 256 --check "$windows_name.sha256"
           )
           dmg_sha256=$(awk '{print $1}' "$checksum_path")
           jq -e \
@@ -305,7 +310,7 @@ jobs:
             --notes-file "$RUNNER_TEMP/artifacts/release-notes.md" \
             --latest
 
-      - name: Upload stable website download
+      - name: Upload stable website downloads
         env:
           GH_TOKEN: ${{ github.token }}
           APP_VERSION: ${{ needs.verify.outputs.app_version }}
@@ -313,10 +318,17 @@ jobs:
         run: |
           versioned_dmg="$RUNNER_TEMP/artifacts/$PRODUCT_NAME-$APP_VERSION-macos-universal.dmg"
           stable_dmg="$RUNNER_TEMP/artifacts/$PRODUCT_NAME-macos-universal.dmg"
+          versioned_windows="$RUNNER_TEMP/artifacts/$PRODUCT_NAME-$APP_VERSION-windows-x64-setup.exe"
+          stable_windows="$RUNNER_TEMP/artifacts/$PRODUCT_NAME-windows-x64-setup.exe"
 
           test -f "$versioned_dmg"
+          test -f "$versioned_windows"
           cp "$versioned_dmg" "$stable_dmg"
-          gh release upload "$GITHUB_REF_NAME" "$stable_dmg" --clobber
+          cp "$versioned_windows" "$stable_windows"
+          gh release upload "$GITHUB_REF_NAME" \
+            "$stable_dmg" \
+            "$stable_windows" \
+            --clobber
 
       - name: Remove candidate tag
         env:

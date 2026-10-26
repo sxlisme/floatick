@@ -2,7 +2,7 @@
 pub fn prepare_transparent_window(window: &tauri::WebviewWindow) {
     use objc2::{msg_send, runtime::AnyObject};
     use objc2_app_kit::{NSColor, NSView, NSWindow};
-    use objc2_foundation::{ns_string, NSObjectNSKeyValueCoding, NSNumber};
+    use objc2_foundation::{ns_string, NSNumber, NSObjectNSKeyValueCoding};
     use objc2_web_kit::WKWebView;
 
     if let Err(error) = window.set_background_color(None) {
@@ -68,6 +68,44 @@ pub fn prepare_transparent_window(window: &tauri::WebviewWindow) {
             "prepare native transparency for {label} failed: {error}"
         );
     }
+}
+
+#[cfg(target_os = "windows")]
+pub fn replace_file(source: &std::path::Path, target: &std::path::Path) -> std::io::Result<()> {
+    use std::os::windows::ffi::OsStrExt;
+
+    const MOVEFILE_REPLACE_EXISTING: u32 = 0x1;
+    const MOVEFILE_WRITE_THROUGH: u32 = 0x8;
+
+    #[link(name = "kernel32")]
+    extern "system" {
+        fn MoveFileExW(
+            existing_file_name: *const u16,
+            new_file_name: *const u16,
+            flags: u32,
+        ) -> i32;
+    }
+
+    let source_wide: Vec<u16> = source.as_os_str().encode_wide().chain(Some(0)).collect();
+    let target_wide: Vec<u16> = target.as_os_str().encode_wide().chain(Some(0)).collect();
+    let moved = unsafe {
+        MoveFileExW(
+            source_wide.as_ptr(),
+            target_wide.as_ptr(),
+            MOVEFILE_REPLACE_EXISTING | MOVEFILE_WRITE_THROUGH,
+        )
+    };
+
+    if moved != 0 {
+        Ok(())
+    } else {
+        Err(std::io::Error::last_os_error())
+    }
+}
+
+#[cfg(not(target_os = "windows"))]
+pub fn replace_file(source: &std::path::Path, target: &std::path::Path) -> std::io::Result<()> {
+    std::fs::rename(source, target)
 }
 
 #[cfg(not(target_os = "macos"))]

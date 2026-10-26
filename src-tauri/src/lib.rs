@@ -1,5 +1,5 @@
-pub mod commands;
 mod clipboard;
+pub mod commands;
 pub mod models;
 mod panel;
 mod platform;
@@ -25,7 +25,7 @@ pub fn run() {
                 )?;
             }
 
-            // Setup macOS Menu Bar System Tray
+            // Set up the macOS menu bar or Windows notification-area tray.
             tray::setup_tray(app.handle())?;
             clipboard::start_clipboard_watcher(app.handle().clone());
 
@@ -55,16 +55,14 @@ pub fn run() {
                 }
 
                 let w_clone = window.clone();
-                window.on_window_event(move |event| {
-                    match event {
-                        WindowEvent::Focused(focused) => {
-                            panel::on_focus_changed(&w_clone, *focused);
-                        }
-                        WindowEvent::Moved(position) => {
-                            tray::constrain_window_to_visible_area(&w_clone, Some(*position));
-                        }
-                        _ => {}
+                window.on_window_event(move |event| match event {
+                    WindowEvent::Focused(focused) => {
+                        panel::on_focus_changed(&w_clone, *focused);
                     }
+                    WindowEvent::Moved(position) => {
+                        tray::constrain_window_to_visible_area(&w_clone, Some(*position));
+                    }
+                    _ => {}
                 });
             }
 
@@ -91,6 +89,7 @@ pub fn run() {
             commands::get_clipboard_items,
             commands::save_clipboard_items,
             commands::get_settings,
+            commands::get_storage_path,
             commands::save_settings,
             commands::set_window_scale,
             commands::apply_presentation_mode,

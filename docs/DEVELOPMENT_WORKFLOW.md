@@ -92,9 +92,9 @@ PR 必须合入 `main`。PR CI 会执行：
 
 1. 前端 TypeScript 编译与代码格式检查；
 2. Rust 编译与后端单元测试；
-3. macOS Menu Bar 托盘与窗口定位边界验证；
-4. macOS Release 构建 (`pnpm tauri:build`)；
-5. Universal 架构检查 (`arm64` 与 `x86_64`)。
+3. macOS 菜单栏与 Windows 系统托盘的窗口定位边界验证；
+4. macOS 与 Windows Tauri Release 构建；
+5. Windows NSIS 安装包生成，以及 macOS Universal 架构检查 (`arm64` 与 `x86_64`)。
 
 CI 通过后才能合并。普通开发不直接推送 `main`。
 
@@ -123,6 +123,7 @@ git push -u origin "release/$VERSION"
 每次推送 `release/X.Y.Z` 都会重新运行候选工作流，生成：
 
 - Universal macOS DMG；
+- Windows x64 NSIS 安装程序；
 - SHA-256 校验文件；
 - Release Manifest；
 - 仅维护者可见的 Draft Release。
@@ -134,7 +135,8 @@ git push -u origin "release/$VERSION"
 从 Draft 下载 DMG，至少检查：
 
 - 安装、首次启动和 Gatekeeper 提示；
-- macOS 菜单栏托盘图标点击展开、收起、角标数字动态更新与失焦自动隐藏；
+- macOS 菜单栏和 Windows 系统托盘图标点击展开、收起与失焦自动隐藏；
+- Windows 顶部、底部和侧边任务栏下的浮窗定位、剪贴板历史与开机自启；
 - TipTap 富文本编辑、斜杠命令（`/task`、`/h1`-`/h3`、`/code` 等）与 Markdown 快捷输入；
 - Todo 创建、进行中聚焦、完成、搜索、归档和恢复；
 - Note 创建、富文本写作、按日期分组与置顶；

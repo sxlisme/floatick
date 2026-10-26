@@ -11,3 +11,6 @@ on first launch, try opening Floatick once, then go to System Settings → Priva
 Security and choose Open Anyway in the Security section.
 
 The same installer supports both Apple silicon and Intel Macs.
+
+Windows users should download the `windows-x64-setup.exe` installer. Because the
+early releases are not code-signed, Windows SmartScreen may ask for confirmation.

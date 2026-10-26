@@ -55,11 +55,13 @@ export const SettingsDrawer: React.FC<SettingsDrawerProps> = ({
 
   const [autostart, setAutostart] = useState(false);
   const [copiedPath, setCopiedPath] = useState(false);
+  const [storagePath, setStoragePath] = useState("~/.floatick");
   const [panelScaleDraft, setPanelScaleDraft] = useState(settings.panelScale);
 
   useEffect(() => {
     if (isOpen) {
       api.isAutostartEnabled().then(setAutostart).catch(() => {});
+      api.getStoragePath().then(setStoragePath).catch(() => {});
       setPanelScaleDraft(settings.panelScale);
     }
   }, [isOpen, settings.panelScale]);
@@ -77,7 +79,7 @@ export const SettingsDrawer: React.FC<SettingsDrawerProps> = ({
   };
 
   const handleCopyPath = () => {
-    navigator.clipboard.writeText("~/.floatick");
+    navigator.clipboard.writeText(storagePath);
     setCopiedPath(true);
     setTimeout(() => setCopiedPath(false), 1800);
   };
@@ -307,7 +309,7 @@ export const SettingsDrawer: React.FC<SettingsDrawerProps> = ({
                   onClick={handleCopyPath}
                   className="flex items-center space-x-1.5 px-2 py-1 rounded-md text-[12px] font-mono text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] hover:bg-[var(--color-hover-overlay)] transition-colors cursor-pointer tactile-btn"
                 >
-                  <span>~/.floatick</span>
+                  <span className="max-w-[210px] truncate" title={storagePath}>{storagePath}</span>
                   {copiedPath ? (
                     <Check size={13} weight="bold" className="text-[var(--color-teal-primary)]" />
                   ) : (

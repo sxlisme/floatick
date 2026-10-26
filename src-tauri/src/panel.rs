@@ -105,7 +105,9 @@ pub(crate) fn on_focus_changed(window: &WebviewWindow, focused: bool) {
                 return;
             }
             let collapse = crate::storage::load_settings()
-                .map(|s| s.collapse_when_clicking_outside && s.presentation_mode != "panelPersistent")
+                .map(|s| {
+                    s.collapse_when_clicking_outside && s.presentation_mode != "panelPersistent"
+                })
                 .unwrap_or(true);
             if collapse {
                 log::info!(target: "floatick::panel", "hide: settled blur");

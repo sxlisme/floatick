@@ -17,7 +17,8 @@ pub fn get_storage_dir() -> Result<PathBuf, String> {
     let home = dirs::home_dir().ok_or_else(|| "Could not locate home directory".to_string())?;
     let path = home.join(ROOT_DIR_NAME);
     if !path.exists() {
-        fs::create_dir_all(&path).map_err(|e| format!("Failed to create storage directory: {e}"))?;
+        fs::create_dir_all(&path)
+            .map_err(|e| format!("Failed to create storage directory: {e}"))?;
     }
     Ok(path)
 }
@@ -44,7 +45,7 @@ fn atomic_save<T: serde::Serialize>(file_name: &str, data: &T) -> Result<(), Str
             .map_err(|e| format!("Failed to sync temp file: {e}"))?;
     }
 
-    fs::rename(&tmp_path, &target_path)
+    crate::platform::replace_file(&tmp_path, &target_path)
         .map_err(|e| format!("Failed to rename temp file to target {target_path:?}: {e}"))?;
 
     Ok(())
@@ -56,10 +57,10 @@ pub fn load_todos() -> Result<Vec<TodoItem>, String> {
     if !path.exists() {
         return Ok(Vec::new());
     }
-    let content = fs::read_to_string(&path)
-        .map_err(|e| format!("Failed to read {TODOS_FILE}: {e}"))?;
-    let items: Vec<TodoItem> = serde_json::from_str(&content)
-        .map_err(|e| format!("Failed to parse {TODOS_FILE}: {e}"))?;
+    let content =
+        fs::read_to_string(&path).map_err(|e| format!("Failed to read {TODOS_FILE}: {e}"))?;
+    let items: Vec<TodoItem> =
+        serde_json::from_str(&content).map_err(|e| format!("Failed to parse {TODOS_FILE}: {e}"))?;
     Ok(items)
 }
 
@@ -73,10 +74,10 @@ pub fn load_tags() -> Result<TagWorkspace, String> {
     if !path.exists() {
         return Ok(TagWorkspace::default());
     }
-    let content = fs::read_to_string(&path)
-        .map_err(|e| format!("Failed to read {TAGS_FILE}: {e}"))?;
-    let mut workspace: TagWorkspace = serde_json::from_str(&content)
-        .map_err(|e| format!("Failed to parse {TAGS_FILE}: {e}"))?;
+    let content =
+        fs::read_to_string(&path).map_err(|e| format!("Failed to read {TAGS_FILE}: {e}"))?;
+    let mut workspace: TagWorkspace =
+        serde_json::from_str(&content).map_err(|e| format!("Failed to parse {TAGS_FILE}: {e}"))?;
 
     for tag in &mut workspace.tags {
         if tag.color_hex.is_empty() {
@@ -123,10 +124,10 @@ pub fn load_notes() -> Result<Vec<NoteItem>, String> {
     if !path.exists() {
         return Ok(Vec::new());
     }
-    let content = fs::read_to_string(&path)
-        .map_err(|e| format!("Failed to read {NOTES_FILE}: {e}"))?;
-    let notes: Vec<NoteItem> = serde_json::from_str(&content)
-        .map_err(|e| format!("Failed to parse {NOTES_FILE}: {e}"))?;
+    let content =
+        fs::read_to_string(&path).map_err(|e| format!("Failed to read {NOTES_FILE}: {e}"))?;
+    let notes: Vec<NoteItem> =
+        serde_json::from_str(&content).map_err(|e| format!("Failed to parse {NOTES_FILE}: {e}"))?;
     Ok(notes)
 }
 
@@ -140,8 +141,8 @@ pub fn load_settings() -> Result<AppSettings, String> {
     if !path.exists() {
         return Ok(AppSettings::default());
     }
-    let content = fs::read_to_string(&path)
-        .map_err(|e| format!("Failed to read {SETTINGS_FILE}: {e}"))?;
+    let content =
+        fs::read_to_string(&path).map_err(|e| format!("Failed to read {SETTINGS_FILE}: {e}"))?;
     let settings: AppSettings = serde_json::from_str(&content)
         .map_err(|e| format!("Failed to parse {SETTINGS_FILE}: {e}"))?;
     Ok(settings)
@@ -172,8 +173,8 @@ pub fn load_clipboard_items() -> Result<Vec<ClipboardItem>, String> {
     if !path.exists() {
         return Ok(Vec::new());
     }
-    let content = fs::read_to_string(&path)
-        .map_err(|e| format!("Failed to read {CLIPBOARD_FILE}: {e}"))?;
+    let content =
+        fs::read_to_string(&path).map_err(|e| format!("Failed to read {CLIPBOARD_FILE}: {e}"))?;
     let items: Vec<ClipboardItem> = serde_json::from_str(&content)
         .map_err(|e| format!("Failed to parse {CLIPBOARD_FILE}: {e}"))?;
     let pruned = prune_clipboard_items(items);

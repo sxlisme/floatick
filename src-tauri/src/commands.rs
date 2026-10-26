@@ -60,6 +60,11 @@ pub fn get_settings() -> Result<AppSettings, String> {
 }
 
 #[tauri::command]
+pub fn get_storage_path() -> Result<String, String> {
+    storage::get_storage_dir().map(|path| path.to_string_lossy().into_owned())
+}
+
+#[tauri::command]
 pub fn save_settings(settings: AppSettings) -> Result<(), String> {
     storage::save_settings(&settings)
 }
@@ -118,7 +123,9 @@ pub fn toggle_window(app_handle: AppHandle) -> Result<(), String> {
 #[tauri::command]
 pub fn set_always_on_top(app_handle: AppHandle, always_on_top: bool) -> Result<(), String> {
     if let Some(window) = app_handle.get_webview_window("main") {
-        window.set_always_on_top(always_on_top).map_err(|e| e.to_string())?;
+        window
+            .set_always_on_top(always_on_top)
+            .map_err(|e| e.to_string())?;
     }
     Ok(())
 }

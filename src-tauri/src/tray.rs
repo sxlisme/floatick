@@ -1,8 +1,7 @@
 use tauri::{
     menu::{Menu, MenuItem, PredefinedMenuItem},
     tray::{MouseButton, MouseButtonState, TrayIconBuilder, TrayIconEvent},
-    AppHandle, LogicalPosition, Manager, PhysicalPosition, Position, Rect,
-    LogicalSize, Size,
+    AppHandle, LogicalPosition, LogicalSize, Manager, PhysicalPosition, Position, Rect, Size,
 };
 
 pub const MAIN_WINDOW_LABEL: &str = "main";
@@ -29,7 +28,14 @@ pub fn setup_tray(app: &AppHandle) -> Result<(), Box<dyn std::error::Error>> {
         .unwrap_or(0);
 
     let title_str = if initial_count > 0 {
-        format!(" {}", if initial_count > 99 { "99+".to_string() } else { initial_count.to_string() })
+        format!(
+            " {}",
+            if initial_count > 99 {
+                "99+".to_string()
+            } else {
+                initial_count.to_string()
+            }
+        )
     } else {
         "".to_string()
     };
@@ -51,7 +57,12 @@ pub fn setup_tray(app: &AppHandle) -> Result<(), Box<dyn std::error::Error>> {
             _ => {}
         })
         .on_tray_icon_event(|tray, event| {
-            if let TrayIconEvent::Click { button, button_state, .. } = &event {
+            if let TrayIconEvent::Click {
+                button,
+                button_state,
+                ..
+            } = &event
+            {
                 log::info!(target: "floatick::panel", "tray: {button:?} {button_state:?}");
             }
             if let TrayIconEvent::Click {
@@ -115,8 +126,10 @@ pub fn find_monitor_for_rect(window: &tauri::WebviewWindow, rect: &Rect) -> Opti
         let tray_center_x = tray_pos.x + (tray_size.width / 2.0);
         let tray_center_y = tray_pos.y + (tray_size.height / 2.0);
 
-        let in_x = tray_center_x >= (mon_pos.x - 4.0) && tray_center_x <= (mon_pos.x + mon_size.width + 4.0);
-        let in_y = tray_center_y >= (mon_pos.y - 100.0) && tray_center_y <= (mon_pos.y + mon_size.height + 50.0);
+        let in_x = tray_center_x >= (mon_pos.x - 4.0)
+            && tray_center_x <= (mon_pos.x + mon_size.width + 4.0);
+        let in_y = tray_center_y >= (mon_pos.y - 100.0)
+            && tray_center_y <= (mon_pos.y + mon_size.height + 50.0);
 
         if in_x && in_y {
             return Some(m.clone());
@@ -181,30 +194,27 @@ pub fn position_window_at_rect(window: &tauri::WebviewWindow, rect: Rect) {
     let tray_pos = rect.position.to_logical::<f64>(scale_factor);
     let tray_size = rect.size.to_logical::<f64>(scale_factor);
 
-    let tray_center_x = tray_pos.x + (tray_size.width / 2.0);
-    let mut window_x = tray_center_x - (window_width / 2.0);
-    let mut window_y = if tray_size.height > 0.0 {
-        tray_pos.y + tray_size.height + 4.0
-    } else {
-        36.0
+    let tray_bounds = MonitorBounds {
+        x: tray_pos.x,
+        y: tray_pos.y,
+        width: tray_size.width,
+        height: tray_size.height,
     };
+    let mut window_x = tray_pos.x + (tray_size.width - window_width) / 2.0;
+    let mut window_y = tray_pos.y + tray_size.height + 4.0;
 
     if let Some(monitor) = target_monitor {
         let mon_scale = monitor.scale_factor();
         let mon_pos = monitor.position().to_logical::<f64>(mon_scale);
         let mon_size = monitor.size().to_logical::<f64>(mon_scale);
-
-        let min_x = mon_pos.x + 8.0;
-        let max_x = mon_pos.x + mon_size.width - window_width - 8.0;
-        window_x = window_x.clamp(min_x, max_x);
-
-        if tray_size.height > 0.0 {
-            let min_y = mon_pos.y + 8.0;
-            let max_y = mon_pos.y + mon_size.height - window_height - 8.0;
-            window_y = window_y.clamp(min_y, max_y);
-        } else {
-            window_y = mon_pos.y + 36.0;
-        }
+        let monitor_bounds = MonitorBounds {
+            x: mon_pos.x,
+            y: mon_pos.y,
+            width: mon_size.width,
+            height: mon_size.height,
+        };
+        (window_x, window_y) =
+            panel_position(monitor_bounds, tray_bounds, (window_width, window_height));
     }
 
     let _ = window.set_position(Position::Logical(LogicalPosition::new(window_x, window_y)));
@@ -253,7 +263,10 @@ pub fn show_window(app_handle: &AppHandle) {
         }
 
         if !positioned {
-            if let Ok(Some(monitor)) = window.primary_monitor().or_else(|_| window.current_monitor()) {
+            if let Ok(Some(monitor)) = window
+                .primary_monitor()
+                .or_else(|_| window.current_monitor())
+            {
                 let scale = monitor.scale_factor();
                 let mon_pos = monitor.position().to_logical::<f64>(scale);
                 let mon_size = monitor.size().to_logical::<f64>(scale);
@@ -263,7 +276,8 @@ pub fn show_window(app_handle: &AppHandle) {
                 let window_width = BASE_PANEL_WIDTH * scale;
                 let window_x = mon_pos.x + mon_size.width - window_width - 20.0;
                 let window_y = mon_pos.y + 36.0;
-                let _ = window.set_position(Position::Logical(LogicalPosition::new(window_x, window_y)));
+                let _ = window
+                    .set_position(Position::Logical(LogicalPosition::new(window_x, window_y)));
             }
         }
 
@@ -288,7 +302,10 @@ pub fn resize_main_window(app_handle: &AppHandle, panel_scale: f64) -> Result<()
 pub fn show_ball(app_handle: &AppHandle) {
     if let Some(window) = app_handle.get_webview_window(BALL_WINDOW_LABEL) {
         if !window.is_visible().unwrap_or(false) {
-            if let Ok(Some(monitor)) = window.primary_monitor().or_else(|_| window.current_monitor()) {
+            if let Ok(Some(monitor)) = window
+                .primary_monitor()
+                .or_else(|_| window.current_monitor())
+            {
                 let scale = monitor.scale_factor();
                 let mon_pos = monitor.position().to_logical::<f64>(scale);
                 let mon_size = monitor.size().to_logical::<f64>(scale);
@@ -326,7 +343,10 @@ pub fn apply_presentation_mode(app_handle: &AppHandle, mode: &str) {
     }
 }
 
-pub fn constrain_window_to_visible_area(window: &tauri::WebviewWindow, position: Option<PhysicalPosition<i32>>) {
+pub fn constrain_window_to_visible_area(
+    window: &tauri::WebviewWindow,
+    position: Option<PhysicalPosition<i32>>,
+) {
     let Ok(size) = window.outer_size() else {
         return;
     };
@@ -383,6 +403,58 @@ pub struct MonitorBounds {
     pub y: f64,
     pub width: f64,
     pub height: f64,
+}
+
+pub fn panel_position(
+    monitor: MonitorBounds,
+    tray: MonitorBounds,
+    panel_size: (f64, f64),
+) -> (f64, f64) {
+    const EDGE_MARGIN: f64 = 8.0;
+    const TRAY_GAP: f64 = 4.0;
+
+    let (panel_width, panel_height) = panel_size;
+    let tray_center_x = tray.x + tray.width / 2.0;
+    let tray_center_y = tray.y + tray.height / 2.0;
+    let distances = [
+        (tray_center_y - monitor.y).abs(),
+        (monitor.y + monitor.height - tray_center_y).abs(),
+        (tray_center_x - monitor.x).abs(),
+        (monitor.x + monitor.width - tray_center_x).abs(),
+    ];
+    let nearest_edge = distances
+        .iter()
+        .enumerate()
+        .min_by(|(_, left), (_, right)| left.total_cmp(right))
+        .map(|(index, _)| index)
+        .unwrap_or(0);
+
+    let (mut x, mut y) = match nearest_edge {
+        1 => (
+            tray_center_x - panel_width / 2.0,
+            tray.y - panel_height - TRAY_GAP,
+        ),
+        2 => (
+            tray.x + tray.width + TRAY_GAP,
+            tray_center_y - panel_height / 2.0,
+        ),
+        3 => (
+            tray.x - panel_width - TRAY_GAP,
+            tray_center_y - panel_height / 2.0,
+        ),
+        _ => (
+            tray_center_x - panel_width / 2.0,
+            tray.y + tray.height + TRAY_GAP,
+        ),
+    };
+
+    let min_x = monitor.x + EDGE_MARGIN;
+    let max_x = (monitor.x + monitor.width - panel_width - EDGE_MARGIN).max(min_x);
+    let min_y = monitor.y + EDGE_MARGIN;
+    let max_y = (monitor.y + monitor.height - panel_height - EDGE_MARGIN).max(min_y);
+    x = x.clamp(min_x, max_x);
+    y = y.clamp(min_y, max_y);
+    (x, y)
 }
 
 pub fn match_monitor_index(monitors: &[MonitorBounds], tray_center: (f64, f64)) -> Option<usize> {
@@ -466,5 +538,65 @@ mod tests {
 
         // Click on left screen tray icon
         assert_eq!(match_monitor_index(&monitors, (-200.0, -300.0)), Some(1));
+    }
+
+    #[test]
+    fn positions_panel_below_a_top_taskbar() {
+        let monitor = MonitorBounds {
+            x: 0.0,
+            y: 0.0,
+            width: 1920.0,
+            height: 1080.0,
+        };
+        let tray = MonitorBounds {
+            x: 1800.0,
+            y: 0.0,
+            width: 32.0,
+            height: 32.0,
+        };
+        assert_eq!(
+            panel_position(monitor, tray, (440.0, 700.0)),
+            (1472.0, 36.0)
+        );
+    }
+
+    #[test]
+    fn positions_panel_above_a_bottom_taskbar() {
+        let monitor = MonitorBounds {
+            x: 0.0,
+            y: 0.0,
+            width: 1920.0,
+            height: 1080.0,
+        };
+        let tray = MonitorBounds {
+            x: 1800.0,
+            y: 1040.0,
+            width: 32.0,
+            height: 40.0,
+        };
+        assert_eq!(
+            panel_position(monitor, tray, (440.0, 700.0)),
+            (1472.0, 336.0)
+        );
+    }
+
+    #[test]
+    fn positions_panel_left_of_a_right_taskbar() {
+        let monitor = MonitorBounds {
+            x: 0.0,
+            y: 0.0,
+            width: 1920.0,
+            height: 1080.0,
+        };
+        let tray = MonitorBounds {
+            x: 1880.0,
+            y: 900.0,
+            width: 40.0,
+            height: 32.0,
+        };
+        assert_eq!(
+            panel_position(monitor, tray, (440.0, 700.0)),
+            (1436.0, 372.0)
+        );
     }
 }

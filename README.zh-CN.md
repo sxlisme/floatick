@@ -3,13 +3,14 @@
     <img src="./docs/assets/app-icon.png" width="36" height="36" align="absmiddle" alt="Floatick Icon" />
     Floatick
   </h1>
-  <p><strong>常驻 macOS 菜单栏的轻量待办与便签</strong></p>
+  <p><strong>支持 macOS 与 Windows 的轻量待办与便签</strong></p>
   <p>随手记，专心做。本地存储 · 极简轻快 · 免费开源</p>
   <p>
-    <a href="https://github.com/lucaslus/floatick/actions/workflows/ci.yml">
-      <img src="https://github.com/lucaslus/floatick/actions/workflows/ci.yml/badge.svg" alt="CI 状态" />
+    <a href="https://github.com/sxlisme/floatick/actions/workflows/ci.yml">
+      <img src="https://github.com/sxlisme/floatick/actions/workflows/ci.yml/badge.svg" alt="CI 状态" />
     </a>
     <img src="https://img.shields.io/badge/macOS-10.15%2B-111111?logo=apple" alt="macOS 10.15+" />
+    <img src="https://img.shields.io/badge/Windows-10%2B-0078D4?logo=windows" alt="Windows 10+" />
     <img src="https://img.shields.io/badge/Tauri-v2-24C8D8?logo=tauri" alt="Tauri v2" />
     <img src="https://img.shields.io/badge/Rust-1.80%2B-DEA584?logo=rust" alt="Rust 1.80+" />
     <img src="https://img.shields.io/badge/React-19-61DAFB?logo=react" alt="React 19" />
@@ -27,11 +28,11 @@
   <img src="./docs/assets/floatick-showcase.png" width="100%" alt="Floatick 菜单栏待办、TipTap 富文本写作与随手记便签" />
 </p>
 
-Floatick 是一款专为 macOS 设计的原生轻量效率工具。安静常驻于屏幕顶部的菜单栏中，未完成事项实时显示角标；点击图标即在手边展开浮动面板。无需复杂配置，点开即记，做完即勾，不扰专注。
+Floatick 是一款支持 macOS 与 Windows 的本地优先轻量效率工具。它安静常驻于菜单栏或系统托盘，点击图标即可在旁边展开浮动面板。无需复杂配置，点开即记，做完即勾，不扰专注。
 
 ## 特性亮点
 
-- **原生常驻菜单栏**：常驻右上角状态栏，角标实时显示待办数，点击即开，不占 Dock。
+- **原生常驻系统托盘**：常驻 macOS 菜单栏或 Windows 通知区域，点击即开，不占 Dock 或任务栏。
 - **全宽卡片与悬浮胶囊**：长标题全宽展示无遮挡；鼠标悬浮呼出截止时间、编辑、复制与删除操作胶囊。
 - **浏览勾选与编辑抽屉独立**：列表专注纯粹浏览与单键勾销；双击或按 `⌘N` 唤出独立编辑抽屉。
 - **TipTap 富文本与斜杠指令**：输入 `/` 快速插入交互式任务清单、多级标题、代码块与引用。
@@ -42,7 +43,10 @@ Floatick 是一款专为 macOS 设计的原生轻量效率工具。安静常驻�
 
 ## 下载安装
 
-前往 [GitHub Releases](https://github.com/lucaslus/floatick/releases) 下载最新 DMG 安装包，打开后将 Floatick 拖入 `Applications` 即可。安装包为 Universal Binary，原生支持 Apple 芯片（M 系列）与 Intel 架构。
+前往 [GitHub Releases](https://github.com/sxlisme/floatick/releases) 下载对应安装包：
+
+- macOS：下载 Universal DMG，原生支持 Apple 芯片（M 系列）与 Intel 架构。
+- Windows：下载 x64 NSIS 安装程序，支持 Windows 10 及以上版本。
 
 > **macOS 首次打开提示**：
 > 如打开时提示“来自未受信任的开发者”，请前往 **系统设置 → 隐私与安全**，在“安全性”中点击 **仍要打开** 即可（仅需首次确认一次）。
@@ -52,13 +56,13 @@ Floatick 是一款专为 macOS 设计的原生轻量效率工具。安静常驻�
 | 操作 | 快捷键 / 交互 | 说明 |
 | --- | --- | --- |
 | **唤出 / 收起** | 点击托盘图标 | 在托盘正下方弹出或收起面板 |
-| **新建事项** | `⌘N` | 打开编辑抽屉（新建待办或便签） |
+| **新建事项** | `⌘N` / `Ctrl+N` | 打开编辑抽屉（新建待办或便签） |
 | **编辑事项** | 双击卡片 / 悬浮点击 ✏️ | 呼出 TipTap 编辑抽屉 |
-| **保存退出** | `⌘ ⏎` | 保存当前内容并关闭抽屉 |
+| **保存退出** | `⌘ ⏎` / `Ctrl+Enter` | 保存当前内容并关闭抽屉 |
 | **返回 / 收起** | `Esc` | 优先关闭抽屉，其次收起主面板 |
-| **快速搜索** | `⌘F` | 聚焦搜索栏 |
-| **切换标签** | `Tab` / `⌘1`, `⌘2` | 在待办与便签视图之间切换 |
-| **偏好设置** | `⌘,` | 呼出设置抽屉（主题、开机自启、置顶等） |
+| **快速搜索** | `⌘F` / `Ctrl+F` | 聚焦搜索栏 |
+| **切换标签** | `Tab` / `⌘1`, `⌘2` / `Ctrl+1`, `Ctrl+2` | 在待办与便签视图之间切换 |
+| **偏好设置** | `⌘,` / `Ctrl+,` | 呼出设置抽屉（主题、开机自启、置顶等） |
 | **斜杠排版** | 输入 `/` | 插入任务清单、标题、代码块等 |
 | **设定截止时间** | 悬浮点击 ⏰ | 直接呼出时间选择器 |
 | **复制 Markdown** | 悬浮点击 ⎘ | 将标题与正文一键复制为 Markdown |
@@ -81,7 +85,7 @@ Floatick 首次启动时会在用户目录自动创建数据文件：
 
 ### 环境要求
 
-- macOS 10.15 或更高版本
+- macOS 10.15 及以上，或 Windows 10 及以上
 - [Node.js](https://nodejs.org/) 18+ 与 [pnpm](https://pnpm.io/)
 - [Rust](https://www.rust-lang.org/) (1.80+) 与 Cargo 环境
 
@@ -98,11 +102,11 @@ pnpm tauri:dev
 ### 生产打包
 
 ```bash
-# 构建 Universal Binary DMG 与 .app
+# 构建当前平台的原生安装包
 pnpm tauri:build
 ```
 
-产物生成于 `src-tauri/target/release/bundle/macos/` 与 `dmg/` 目录下。
+macOS 产物生成于 `src-tauri/target/release/bundle/macos/` 与 `dmg/`，Windows 安装程序生成于 `src-tauri/target/release/bundle/nsis/`。
 
 ## 项目结构
 
@@ -120,7 +124,7 @@ src/                          # 前端界面 (React 19 + TypeScript + Vite + Tai
   lib/                        # Tauri IPC 调用封装
 src-tauri/                    # 原生后端 (Rust + Tauri 2.x)
   src/
-    tray.rs                   # macOS 菜单栏托盘与窗口磁吸定位
+    tray.rs                   # macOS/Windows 系统托盘与窗口定位
     storage.rs                # 本地 JSON 原子持久化存储
     commands.rs               # 暴露给前端调用的 Tauri Command
     lib.rs                    # 窗口生命周期与失焦自动收起

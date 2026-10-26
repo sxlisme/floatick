@@ -249,6 +249,10 @@ export const api = {
     if (isMock) return;
     await invoke("set_autostart_enabled", { enabled });
   },
+  getStoragePath: async (): Promise<string> => {
+    if (isMock) return "~/.floatick";
+    return await invoke<string>("get_storage_path");
+  },
   quitApp: async (): Promise<void> => {
     if (isMock) return;
     await invoke("quit_app");

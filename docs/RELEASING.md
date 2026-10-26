@@ -27,7 +27,7 @@ they would duplicate `main` without providing an additional release boundary.
 1. Create `feature/*` or `fix/*` from the latest `main`.
 2. Open a pull request into `main`.
 3. Wait for the required CI check. CI runs formatting, analysis, tests, a
-   release-mode macOS build, and universal architecture validation.
+   release-mode macOS and Windows builds, plus macOS universal architecture validation.
 4. Merge the pull request only after CI succeeds.
 
 `main` is protected against force pushes and deletion. Direct pushes should not
@@ -61,17 +61,17 @@ Every push to `release/X.Y.Z` runs the Release Candidate workflow. It:
 
 1. validates that the branch name matches `pubspec.yaml`;
 2. runs formatting, analysis, and tests;
-3. builds the universal release-mode macOS app;
+3. builds the universal release-mode macOS app and the Windows x64 NSIS installer;
 4. normalizes embedded code to one ad-hoc identity for the unsigned candidate;
 5. verifies the embedded Sparkle feed URL and downloads a valid live appcast;
 6. verifies both architectures and launches the app on the Apple silicon runner;
-7. creates the DMG, SHA-256 checksum, and build manifest;
+7. creates the DMG, Windows installer, SHA-256 checksums, and build manifest;
 8. creates or updates a Draft Release associated with
    `candidate/vX.Y.Z`.
 
 Only users with push access can list Draft Releases through the GitHub API.
 Because the repository is public, the temporary source tag itself is visible,
-but its DMG assets remain in the Draft. The Draft must not be manually
+but its macOS and Windows assets remain in the Draft. The Draft must not be manually
 published from the GitHub interface.
 
 If acceptance fails, commit the fix to the same release branch and push again.
@@ -80,10 +80,13 @@ manifest. The old candidate must not be tagged as stable.
 
 ## Candidate acceptance checklist
 
-Download the DMG from the Draft Release and verify at least:
+Download both installers from the Draft Release and verify at least:
 
 - checksum matches the attached `.sha256` file;
 - DMG opens and the app copies to `/Applications`;
+- Windows NSIS setup installs and uninstalls for the current user;
+- Windows tray positioning works with top, bottom, and side taskbars;
+- clipboard history and launch-at-login work on Windows;
 - first-launch Gatekeeper instructions remain accurate;
 - floating icon drag, expand direction, collapse position, and right-click
   Quit work;
@@ -144,6 +147,7 @@ After approval, the workflow fails safely unless:
   architectures all match.
 
 The workflow does not rebuild the app. It signs an appcast for the accepted DMG,
+retains the accepted Windows installer,
 renames and publishes the Draft Release, removes the temporary candidate tag,
 and deploys the appcast to GitHub Pages. A rerun after a Pages failure reuses
 the already published assets.
