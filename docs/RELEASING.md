@@ -176,13 +176,13 @@ same Draft → acceptance → merge commit → stable tag flow.
 
 ## Sparkle security
 
-Sparkle is pinned to `2.9.2`. The update archive and appcast are signed with an
-independent EdDSA key. The public key is stored in
-`macos/Runner/Info.plist`; the private key is stored in the local login
-Keychain and in the production environment's `SPARKLE_ED_PRIVATE_KEY` GitHub
-Actions secret. Candidate workflows cannot access the production secret. The
-production environment accepts only `v*` tags and requires approval from
-`lucaslus` before exposing the secret.
+Sparkle is pinned to `2.9.2`. When the production environment provides the
+`SPARKLE_ED_PRIVATE_KEY` GitHub Actions secret, the workflow signs and deploys
+the legacy Sparkle appcast. Candidate workflows cannot access the production
+secret. If the secret is not configured, the workflow still publishes the
+tested macOS and Windows installers but skips the appcast and GitHub Pages
+deployment. The production environment accepts only `v*` tags and requires
+approval from `lucaslus` before exposing its secrets.
 
 Never commit or print the private key. Keep an encrypted offline backup. The
 Sparkle key protects the update chain but does not replace Apple Developer ID
