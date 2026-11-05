@@ -1,17 +1,23 @@
 use std::fs::{self, File};
 use std::io::Write;
 use std::path::PathBuf;
+use std::sync::Mutex;
 use std::time::{SystemTime, UNIX_EPOCH};
 
-use crate::models::{AppSettings, ClipboardItem, NoteItem, TagWorkspace, TodoItem};
+use crate::models::{
+    AppSettings, ClipboardItem, NoteItem, TagWorkspace, TodoItem, WindowPlacementState,
+    WindowPosition,
+};
 
 const ROOT_DIR_NAME: &str = ".floatick";
 const TODOS_FILE: &str = "todos.json";
 const TAGS_FILE: &str = "tags.json";
 const NOTES_FILE: &str = "notes.json";
 const SETTINGS_FILE: &str = "settings.json";
+const WINDOW_STATE_FILE: &str = "window-state.json";
 const CLIPBOARD_FILE: &str = "clipboard.json";
 const CLIPBOARD_RETENTION_DAYS: i64 = 7;
+static WINDOW_STATE_LOCK: Mutex<()> = Mutex::new(());
 
 pub fn get_storage_dir() -> Result<PathBuf, String> {
     let home = dirs::home_dir().ok_or_else(|| "Could not locate home directory".to_string())?;
@@ -150,6 +156,37 @@ pub fn load_settings() -> Result<AppSettings, String> {
 
 pub fn save_settings(settings: &AppSettings) -> Result<(), String> {
     atomic_save(SETTINGS_FILE, settings)
+}
+
+fn load_window_state_unlocked() -> Result<WindowPlacementState, String> {
+    let dir = get_storage_dir()?;
+    let path = dir.join(WINDOW_STATE_FILE);
+    if !path.exists() {
+        return Ok(WindowPlacementState::default());
+    }
+    let content = fs::read_to_string(&path)
+        .map_err(|e| format!("Failed to read {WINDOW_STATE_FILE}: {e}"))?;
+    serde_json::from_str(&content).map_err(|e| format!("Failed to parse {WINDOW_STATE_FILE}: {e}"))
+}
+
+pub fn load_window_state() -> Result<WindowPlacementState, String> {
+    let _guard = WINDOW_STATE_LOCK
+        .lock()
+        .map_err(|_| "Window state lock is poisoned".to_string())?;
+    load_window_state_unlocked()
+}
+
+pub fn save_window_position(label: &str, position: WindowPosition) -> Result<(), String> {
+    let _guard = WINDOW_STATE_LOCK
+        .lock()
+        .map_err(|_| "Window state lock is poisoned".to_string())?;
+    let mut state = load_window_state_unlocked().unwrap_or_default();
+    match label {
+        "main" => state.main = Some(position),
+        "ball" => state.ball = Some(position),
+        _ => return Err(format!("Unknown window label: {label}")),
+    }
+    atomic_save(WINDOW_STATE_FILE, &state)
 }
 
 fn prune_clipboard_items(items: Vec<ClipboardItem>) -> Vec<ClipboardItem> {

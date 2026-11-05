@@ -98,20 +98,28 @@ export const FloatickMarkdown: React.FC<FloatickMarkdownProps> = ({
             </a>
           ),
           hr: () => <hr className="my-3.5 border-[var(--color-border-panel)]" />,
+          img: ({ src, alt }) => (
+            <img
+              src={src}
+              alt={alt || ""}
+              loading="lazy"
+              className="block max-w-full h-auto my-2.5 rounded-md border border-[var(--color-border-panel)]"
+            />
+          ),
           table: ({ children }) => (
-            <div className="overflow-x-auto my-2.5">
-              <table className="w-full text-xs border-collapse border border-[var(--color-border-panel)] rounded-xl overflow-hidden">
+            <div className="overflow-x-auto my-2.5 rounded-md border border-[var(--color-border-panel)]">
+              <table className="w-full min-w-[320px] text-xs border-collapse">
                 {children}
               </table>
             </div>
           ),
           th: ({ children }) => (
-            <th className="bg-[var(--color-hover-overlay)] px-3 py-1.5 text-left font-semibold border-b border-[var(--color-border-panel)]">
+            <th className="bg-[var(--color-hover-overlay)] px-3 py-1.5 text-left font-semibold border-b border-r last:border-r-0 border-[var(--color-border-panel)] break-words">
               {children}
             </th>
           ),
           td: ({ children }) => (
-            <td className="px-3 py-1.5 border-b border-[var(--color-border-panel)]">
+            <td className="px-3 py-1.5 border-b border-r last:border-r-0 border-[var(--color-border-panel)] break-words">
               {children}
             </td>
           ),

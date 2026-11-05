@@ -11,6 +11,7 @@ pub(crate) enum TrayAction {
 }
 
 impl TrayAction {
+    #[cfg(any(not(target_os = "windows"), test))]
     fn for_visibility(visible: bool) -> Self {
         if visible {
             Self::Hide
@@ -41,11 +42,13 @@ impl PanelState {
         self.revision == revision && self.tray_action.is_none()
     }
 
+    #[cfg(any(not(target_os = "windows"), test))]
     fn tray_pressed(&mut self, visible: bool) {
         self.cancel_pending_hide();
         self.tray_action = Some(TrayAction::for_visibility(visible));
     }
 
+    #[cfg(any(not(target_os = "windows"), test))]
     fn tray_released(&mut self, visible: bool) -> TrayAction {
         self.cancel_pending_hide();
         self.tray_action
@@ -63,10 +66,12 @@ pub(crate) fn cancel_pending_hide() {
     STATE.lock().unwrap().cancel_pending_hide();
 }
 
+#[cfg(not(target_os = "windows"))]
 pub(crate) fn tray_pressed(visible: bool) {
     STATE.lock().unwrap().tray_pressed(visible);
 }
 
+#[cfg(not(target_os = "windows"))]
 pub(crate) fn tray_released(visible: bool) -> TrayAction {
     STATE.lock().unwrap().tray_released(visible)
 }
@@ -120,8 +125,8 @@ pub(crate) fn on_focus_changed(window: &WebviewWindow, focused: bool) {
                     .unwrap_or_else(|_| "transient".to_string())
                     .as_str()
                 {
-                    "ballPersistent" => crate::tray::show_ball(&app_handle),
-                    "transient" => crate::tray::hide_ball(&app_handle),
+                    "ballPersistent" => crate::tray::show_ball(app_handle),
+                    "transient" => crate::tray::hide_ball(app_handle),
                     _ => {}
                 }
             }

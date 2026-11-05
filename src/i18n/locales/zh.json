@@ -118,6 +118,7 @@
   "viewModeHint": "按 E 编辑 · Esc 退出",
   "edit": "编辑",
   "close": "关闭",
+  "back": "返回",
   "createTodoAction": "新建待办",
   "saveChangesAction": "保存",
   "shortcutHint": "Ctrl/⌘ + Enter 保存 · Esc 退出",

@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import {
-  X,
+  ArrowLeft,
   Sun,
   Moon,
   Desktop,
@@ -113,14 +113,15 @@ export const SettingsDrawer: React.FC<SettingsDrawerProps> = ({
         <span className="text-[14px] font-semibold text-[var(--color-text-primary)] tracking-tight">
           {t("settingsTitle")}
         </span>
-        <Tooltip content={t("escToClose")}>
+        <Tooltip content={t("back")}>
           <button
             type="button"
+            aria-label={t("back")}
             onMouseDown={(event) => event.stopPropagation()}
             onClick={onClose}
             className="w-7 h-7 rounded-lg flex items-center justify-center text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] hover:bg-[var(--color-hover-overlay)] transition-colors tactile-btn cursor-pointer"
           >
-            <X size={16} weight="bold" />
+            <ArrowLeft size={17} weight="bold" />
           </button>
         </Tooltip>
       </div>
@@ -329,7 +330,7 @@ export const SettingsDrawer: React.FC<SettingsDrawerProps> = ({
                 {t("versionLabel")}
               </span>
               <span className="text-[12px] font-mono text-[var(--color-text-subtle)]">
-                v0.5.2
+                v0.5.3
               </span>
             </div>
           </div>

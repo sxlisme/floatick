@@ -1,3 +1,7 @@
+use std::collections::HashMap;
+use std::sync::{mpsc, OnceLock, RwLock};
+use std::time::Duration;
+
 use tauri::{
     menu::{Menu, MenuItem, PredefinedMenuItem},
     tray::{MouseButton, MouseButtonState, TrayIconBuilder, TrayIconEvent},
@@ -8,6 +12,7 @@ pub const MAIN_WINDOW_LABEL: &str = "main";
 pub const BALL_WINDOW_LABEL: &str = "ball";
 const BASE_PANEL_WIDTH: f64 = 440.0;
 const BASE_PANEL_HEIGHT: f64 = 700.0;
+const POSITION_SAVE_DELAY: Duration = Duration::from_millis(300);
 
 pub fn setup_tray(app: &AppHandle) -> Result<(), Box<dyn std::error::Error>> {
     let show_item = MenuItem::with_id(app, "show", "显示 Floatick", true, None::<&str>)?;
@@ -16,6 +21,11 @@ pub fn setup_tray(app: &AppHandle) -> Result<(), Box<dyn std::error::Error>> {
 
     let menu = Menu::with_items(app, &[&show_item, &sep, &quit_item])?;
 
+    #[cfg(target_os = "windows")]
+    let tray_icon =
+        tauri::image::Image::from_bytes(include_bytes!("../icons/tray-icon-windows@2x.png"))?;
+
+    #[cfg(not(target_os = "windows"))]
     let tray_icon = tauri::image::Image::from_bytes(include_bytes!("../icons/tray-icon@2x.png"))?;
 
     let initial_count = crate::storage::load_todos()
@@ -76,8 +86,15 @@ pub fn setup_tray(app: &AppHandle) -> Result<(), Box<dyn std::error::Error>> {
                 match button_state {
                     MouseButtonState::Down => {
                         update_cached_tray_rect(rect);
-                        if let Some(window) = app_handle.get_webview_window(MAIN_WINDOW_LABEL) {
-                            crate::panel::tray_pressed(window.is_visible().unwrap_or(false));
+
+                        #[cfg(target_os = "windows")]
+                        crate::panel::cancel_pending_hide();
+
+                        #[cfg(not(target_os = "windows"))]
+                        {
+                            if let Some(window) = app_handle.get_webview_window(MAIN_WINDOW_LABEL) {
+                                crate::panel::tray_pressed(window.is_visible().unwrap_or(false));
+                            }
                         }
                     }
                     MouseButtonState::Up => toggle_window_at_rect(app_handle, rect),
@@ -89,9 +106,63 @@ pub fn setup_tray(app: &AppHandle) -> Result<(), Box<dyn std::error::Error>> {
     Ok(())
 }
 
-use std::sync::RwLock;
-
 static LAST_TRAY_RECT: RwLock<Option<Rect>> = RwLock::new(None);
+static POSITION_SENDER: OnceLock<mpsc::Sender<PositionUpdate>> = OnceLock::new();
+
+#[derive(Clone, Copy)]
+struct PositionUpdate {
+    label: &'static str,
+    position: PhysicalPosition<i32>,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+struct PhysicalMonitorBounds {
+    x: i32,
+    y: i32,
+    width: u32,
+    height: u32,
+}
+
+pub fn record_window_position(label: &'static str, position: PhysicalPosition<i32>) {
+    let sender = POSITION_SENDER.get_or_init(|| {
+        let (sender, receiver) = mpsc::channel::<PositionUpdate>();
+        std::thread::spawn(move || {
+            while let Ok(first) = receiver.recv() {
+                let mut pending = HashMap::new();
+                pending.insert(first.label, first.position);
+                let disconnected = loop {
+                    match receiver.recv_timeout(POSITION_SAVE_DELAY) {
+                        Ok(update) => {
+                            pending.insert(update.label, update.position);
+                        }
+                        Err(mpsc::RecvTimeoutError::Timeout) => break false,
+                        Err(mpsc::RecvTimeoutError::Disconnected) => break true,
+                    }
+                };
+
+                for (label, position) in pending {
+                    let stored = crate::models::WindowPosition {
+                        x: position.x,
+                        y: position.y,
+                    };
+                    if let Err(error) = crate::storage::save_window_position(label, stored) {
+                        log::warn!(
+                            target: "floatick::panel",
+                            "save {label} position failed: {error}"
+                        );
+                    }
+                }
+
+                if disconnected {
+                    break;
+                }
+            }
+        });
+        sender
+    });
+
+    let _ = sender.send(PositionUpdate { label, position });
+}
 
 pub fn update_cached_tray_rect(rect: Rect) {
     let size = rect.size.to_logical::<f64>(1.0);
@@ -104,6 +175,79 @@ pub fn update_cached_tray_rect(rect: Rect) {
 
 pub fn get_cached_tray_rect() -> Option<Rect> {
     LAST_TRAY_RECT.read().ok().and_then(|guard| *guard)
+}
+
+fn fit_saved_position(
+    saved: crate::models::WindowPosition,
+    window_size: (u32, u32),
+    monitors: &[PhysicalMonitorBounds],
+) -> Option<PhysicalPosition<i32>> {
+    let width = i64::from(window_size.0.max(1));
+    let height = i64::from(window_size.1.max(1));
+    let left = i64::from(saved.x);
+    let top = i64::from(saved.y);
+    let right = left + width;
+    let bottom = top + height;
+
+    let monitor = monitors.iter().max_by_key(|monitor| {
+        let monitor_left = i64::from(monitor.x);
+        let monitor_top = i64::from(monitor.y);
+        let monitor_right = monitor_left + i64::from(monitor.width);
+        let monitor_bottom = monitor_top + i64::from(monitor.height);
+        let overlap_width = (right.min(monitor_right) - left.max(monitor_left)).max(0);
+        let overlap_height = (bottom.min(monitor_bottom) - top.max(monitor_top)).max(0);
+        overlap_width * overlap_height
+    })?;
+
+    let monitor_left = i64::from(monitor.x);
+    let monitor_top = i64::from(monitor.y);
+    let monitor_right = monitor_left + i64::from(monitor.width);
+    let monitor_bottom = monitor_top + i64::from(monitor.height);
+    let overlap_width = (right.min(monitor_right) - left.max(monitor_left)).max(0);
+    let overlap_height = (bottom.min(monitor_bottom) - top.max(monitor_top)).max(0);
+    if overlap_width == 0 || overlap_height == 0 {
+        return None;
+    }
+
+    let max_x = (monitor_right - width).max(monitor_left);
+    let max_y = (monitor_bottom - height).max(monitor_top);
+    let x = left.clamp(monitor_left, max_x) as i32;
+    let y = top.clamp(monitor_top, max_y) as i32;
+    Some(PhysicalPosition::new(x, y))
+}
+
+fn restore_saved_window_position(window: &tauri::WebviewWindow, label: &'static str) -> bool {
+    let Ok(state) = crate::storage::load_window_state() else {
+        return false;
+    };
+    let saved = match label {
+        MAIN_WINDOW_LABEL => state.main,
+        BALL_WINDOW_LABEL => state.ball,
+        _ => None,
+    };
+    let Some(saved) = saved else {
+        return false;
+    };
+    let Ok(size) = window.outer_size() else {
+        return false;
+    };
+    let Ok(monitors) = window.available_monitors() else {
+        return false;
+    };
+    let bounds = monitors
+        .iter()
+        .map(|monitor| PhysicalMonitorBounds {
+            x: monitor.position().x,
+            y: monitor.position().y,
+            width: monitor.size().width,
+            height: monitor.size().height,
+        })
+        .collect::<Vec<_>>();
+    let Some(position) = fit_saved_position(saved, (size.width, size.height), &bounds) else {
+        return false;
+    };
+
+    window.set_position(Position::Physical(position)).is_ok()
 }
 
 pub fn find_monitor_for_rect(window: &tauri::WebviewWindow, rect: &Rect) -> Option<tauri::Monitor> {
@@ -223,7 +367,20 @@ pub fn position_window_at_rect(window: &tauri::WebviewWindow, rect: Rect) {
 pub fn toggle_window_at_rect(app_handle: &AppHandle, rect: Rect) {
     if let Some(window) = app_handle.get_webview_window(MAIN_WINDOW_LABEL) {
         let is_visible = window.is_visible().unwrap_or(false);
+
+        // Windows can occasionally omit one half of a tray mouse gesture after
+        // sleep or Explorer restarts. Use live visibility instead of retaining
+        // a Down event indefinitely.
+        #[cfg(target_os = "windows")]
+        let action = if is_visible {
+            crate::panel::TrayAction::Hide
+        } else {
+            crate::panel::TrayAction::Show
+        };
+
+        #[cfg(not(target_os = "windows"))]
         let action = crate::panel::tray_released(is_visible);
+
         log::info!(target: "floatick::panel", "tray action: {action:?}, visible={is_visible}");
         match action {
             crate::panel::TrayAction::Hide => {
@@ -231,7 +388,9 @@ pub fn toggle_window_at_rect(app_handle: &AppHandle, rect: Rect) {
             }
             crate::panel::TrayAction::Show => {
                 crate::panel::cancel_pending_hide();
-                position_window_at_rect(&window, rect);
+                if !restore_saved_window_position(&window, MAIN_WINDOW_LABEL) {
+                    position_window_at_rect(&window, rect);
+                }
                 let _ = window.show();
                 let _ = window.set_focus();
             }
@@ -244,13 +403,15 @@ pub fn show_window(app_handle: &AppHandle) {
     if let Some(window) = app_handle.get_webview_window(MAIN_WINDOW_LABEL) {
         crate::panel::cancel_pending_hide();
 
-        let mut positioned = false;
+        let mut positioned = restore_saved_window_position(&window, MAIN_WINDOW_LABEL);
         if let Some(tray) = app_handle.tray_by_id("main-tray") {
-            if let Ok(Some(rect)) = tray.rect() {
-                let size = rect.size.to_logical::<f64>(1.0);
-                if size.width > 0.0 && size.height > 0.0 {
-                    position_window_at_rect(&window, rect);
-                    positioned = true;
+            if !positioned {
+                if let Ok(Some(rect)) = tray.rect() {
+                    let size = rect.size.to_logical::<f64>(1.0);
+                    if size.width > 0.0 && size.height > 0.0 {
+                        position_window_at_rect(&window, rect);
+                        positioned = true;
+                    }
                 }
             }
         }
@@ -301,7 +462,9 @@ pub fn resize_main_window(app_handle: &AppHandle, panel_scale: f64) -> Result<()
 
 pub fn show_ball(app_handle: &AppHandle) {
     if let Some(window) = app_handle.get_webview_window(BALL_WINDOW_LABEL) {
-        if !window.is_visible().unwrap_or(false) {
+        if !window.is_visible().unwrap_or(false)
+            && !restore_saved_window_position(&window, BALL_WINDOW_LABEL)
+        {
             if let Ok(Some(monitor)) = window
                 .primary_monitor()
                 .or_else(|_| window.current_monitor())
@@ -597,6 +760,67 @@ mod tests {
         assert_eq!(
             panel_position(monitor, tray, (440.0, 700.0)),
             (1436.0, 372.0)
+        );
+    }
+
+    #[test]
+    fn restores_a_saved_position_without_moving_it() {
+        let monitors = [PhysicalMonitorBounds {
+            x: 0,
+            y: 0,
+            width: 1920,
+            height: 1080,
+        }];
+        let saved = crate::models::WindowPosition { x: 120, y: 200 };
+
+        assert_eq!(
+            fit_saved_position(saved, (440, 700), &monitors),
+            Some(PhysicalPosition::new(120, 200))
+        );
+    }
+
+    #[test]
+    fn clamps_a_partially_visible_saved_position() {
+        let monitors = [PhysicalMonitorBounds {
+            x: 0,
+            y: 0,
+            width: 1920,
+            height: 1080,
+        }];
+        let saved = crate::models::WindowPosition { x: 1800, y: 900 };
+
+        assert_eq!(
+            fit_saved_position(saved, (440, 700), &monitors),
+            Some(PhysicalPosition::new(1480, 380))
+        );
+    }
+
+    #[test]
+    fn ignores_a_saved_position_on_a_disconnected_monitor() {
+        let monitors = [PhysicalMonitorBounds {
+            x: 0,
+            y: 0,
+            width: 1920,
+            height: 1080,
+        }];
+        let saved = crate::models::WindowPosition { x: 2500, y: 100 };
+
+        assert_eq!(fit_saved_position(saved, (440, 700), &monitors), None);
+    }
+
+    #[test]
+    fn restores_positions_on_monitors_with_negative_coordinates() {
+        let monitors = [PhysicalMonitorBounds {
+            x: -1080,
+            y: -318,
+            width: 1080,
+            height: 1920,
+        }];
+        let saved = crate::models::WindowPosition { x: -900, y: -100 };
+
+        assert_eq!(
+            fit_saved_position(saved, (48, 48), &monitors),
+            Some(PhysicalPosition::new(-900, -100))
         );
     }
 }

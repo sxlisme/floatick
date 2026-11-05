@@ -22,13 +22,11 @@ pub fn run() {
             Some(vec!["--autostart"]),
         ))
         .setup(|app| {
-            if cfg!(debug_assertions) {
-                app.handle().plugin(
-                    tauri_plugin_log::Builder::default()
-                        .level(log::LevelFilter::Info)
-                        .build(),
-                )?;
-            }
+            app.handle().plugin(
+                tauri_plugin_log::Builder::default()
+                    .level(log::LevelFilter::Info)
+                    .build(),
+            )?;
 
             // Set up the macOS menu bar or Windows notification-area tray.
             tray::setup_tray(app.handle())?;
@@ -65,6 +63,12 @@ pub fn run() {
                         panel::on_focus_changed(&w_clone, *focused);
                     }
                     WindowEvent::Moved(position) => {
+                        tray::record_window_position(tray::MAIN_WINDOW_LABEL, *position);
+
+                        // Calling set_position from a Windows WM_MOVE callback can
+                        // create an endless native message loop after display/DPI
+                        // changes. Tray placement already keeps the panel visible.
+                        #[cfg(not(target_os = "windows"))]
                         tray::constrain_window_to_visible_area(&w_clone, Some(*position));
                     }
                     _ => {}
@@ -74,12 +78,23 @@ pub fn run() {
             if let Some(window) = app.get_webview_window(tray::BALL_WINDOW_LABEL) {
                 platform::prepare_transparent_window(&window);
 
-                let w_clone = window.clone();
-                window.on_window_event(move |event| {
+                #[cfg(target_os = "windows")]
+                window.on_window_event(|event| {
                     if let WindowEvent::Moved(position) = event {
-                        tray::constrain_window_to_visible_area(&w_clone, Some(*position));
+                        tray::record_window_position(tray::BALL_WINDOW_LABEL, *position);
                     }
                 });
+
+                #[cfg(not(target_os = "windows"))]
+                {
+                    let w_clone = window.clone();
+                    window.on_window_event(move |event| {
+                        if let WindowEvent::Moved(position) = event {
+                            tray::record_window_position(tray::BALL_WINDOW_LABEL, *position);
+                            tray::constrain_window_to_visible_area(&w_clone, Some(*position));
+                        }
+                    });
+                }
             }
 
             Ok(())

@@ -131,3 +131,19 @@ impl Default for AppSettings {
         }
     }
 }
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct WindowPosition {
+    pub x: i32,
+    pub y: i32,
+}
+
+#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct WindowPlacementState {
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub main: Option<WindowPosition>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub ball: Option<WindowPosition>,
+}

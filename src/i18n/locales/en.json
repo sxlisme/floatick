@@ -118,6 +118,7 @@
   "viewModeHint": "Press E to edit · Esc to close",
   "edit": "Edit",
   "close": "Close",
+  "back": "Back",
   "createTodoAction": "New Todo",
   "saveChangesAction": "Save",
   "shortcutHint": "Ctrl/⌘ + Enter Save · Esc Exit",

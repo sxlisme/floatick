@@ -1,7 +1,9 @@
 import React, { useEffect, useState, useRef, useMemo } from "react";
 import { useEditor, EditorContent, Editor } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
+import Image from "@tiptap/extension-image";
 import Placeholder from "@tiptap/extension-placeholder";
+import { TableKit } from "@tiptap/extension-table";
 import TaskList from "@tiptap/extension-task-list";
 import TaskItem from "@tiptap/extension-task-item";
 import { Markdown } from "tiptap-markdown";
@@ -23,6 +25,9 @@ import {
   ArrowUUpRight,
   DotsThree,
   Eraser,
+  Plus,
+  Table as TableIcon,
+  Trash,
 } from "@phosphor-icons/react";
 
 // Refined, minimalist, pixel-crisp SVG icons for Slash Menu
@@ -216,6 +221,15 @@ const SLASH_COMMANDS: SlashCommandItem[] = [
     action: (editor) => editor.chain().focus().toggleOrderedList().run(),
   },
   {
+    id: "table",
+    label: "表格",
+    desc: "插入三列 Markdown 表格",
+    shortcut: "/table",
+    icon: TableIcon,
+    action: (editor) =>
+      editor.chain().focus().insertTable({ rows: 3, cols: 3, withHeaderRow: true }).run(),
+  },
+  {
     id: "h1",
     label: "大标题",
     desc: "一级主标题",
@@ -346,7 +360,8 @@ export const EditorToolbar: React.FC<{ editor: Editor | null }> = ({ editor }) =
   const isMoreActive =
     editor.isActive("blockquote") ||
     editor.isActive("codeBlock") ||
-    editor.isActive("heading", { level: 3 });
+    editor.isActive("heading", { level: 3 }) ||
+    editor.isActive("table");
 
   return (
     <div className="relative flex items-center justify-between pb-2 mb-2 border-b border-[var(--color-border-panel)]/60 shrink-0 select-none">
@@ -541,6 +556,95 @@ export const EditorToolbar: React.FC<{ editor: Editor | null }> = ({ editor }) =
                   <span className="text-[10px] font-mono text-[var(--color-text-subtle)] opacity-40">/divider</span>
                 </button>
 
+                {!editor.isActive("table") ? (
+                  <button
+                    type="button"
+                    onMouseDown={(e) => e.preventDefault()}
+                    onClick={() => {
+                      editor
+                        .chain()
+                        .focus()
+                        .insertTable({ rows: 3, cols: 3, withHeaderRow: true })
+                        .run();
+                      setShowMoreMenu(false);
+                    }}
+                    className="w-full px-2 py-1.5 rounded-lg flex items-center justify-between text-left transition-colors cursor-pointer text-[var(--color-text-primary)] hover:bg-black/[0.03] dark:hover:bg-white/[0.04]"
+                  >
+                    <div className="flex items-center space-x-2">
+                      <TableIcon size={14} className="text-[var(--color-text-subtle)]" />
+                      <span className="text-[12px]">插入表格</span>
+                    </div>
+                    <span className="text-[10px] font-mono text-[var(--color-text-subtle)] opacity-40">/table</span>
+                  </button>
+                ) : (
+                  <>
+                    <div className="my-1 border-t border-[var(--color-border-panel)]/50" />
+                    <div className="px-2.5 pt-1 pb-1 text-[11px] font-medium text-[var(--color-text-subtle)]">
+                      表格操作
+                    </div>
+                    <button
+                      type="button"
+                      onMouseDown={(e) => e.preventDefault()}
+                      onClick={() => {
+                        editor.chain().focus().addRowAfter().run();
+                        setShowMoreMenu(false);
+                      }}
+                      className="w-full px-2 py-1.5 rounded-lg flex items-center space-x-2 text-left transition-colors cursor-pointer text-[var(--color-text-primary)] hover:bg-black/[0.03] dark:hover:bg-white/[0.04]"
+                    >
+                      <Plus size={14} className="text-[var(--color-text-subtle)]" />
+                      <span className="text-[12px]">在下方添加行</span>
+                    </button>
+                    <button
+                      type="button"
+                      onMouseDown={(e) => e.preventDefault()}
+                      onClick={() => {
+                        editor.chain().focus().addColumnAfter().run();
+                        setShowMoreMenu(false);
+                      }}
+                      className="w-full px-2 py-1.5 rounded-lg flex items-center space-x-2 text-left transition-colors cursor-pointer text-[var(--color-text-primary)] hover:bg-black/[0.03] dark:hover:bg-white/[0.04]"
+                    >
+                      <Plus size={14} className="text-[var(--color-text-subtle)]" />
+                      <span className="text-[12px]">在右侧添加列</span>
+                    </button>
+                    <button
+                      type="button"
+                      onMouseDown={(e) => e.preventDefault()}
+                      onClick={() => {
+                        editor.chain().focus().deleteRow().run();
+                        setShowMoreMenu(false);
+                      }}
+                      className="w-full px-2 py-1.5 rounded-lg flex items-center space-x-2 text-left transition-colors cursor-pointer text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] hover:bg-black/[0.03] dark:hover:bg-white/[0.04]"
+                    >
+                      <Trash size={14} />
+                      <span className="text-[12px]">删除当前行</span>
+                    </button>
+                    <button
+                      type="button"
+                      onMouseDown={(e) => e.preventDefault()}
+                      onClick={() => {
+                        editor.chain().focus().deleteColumn().run();
+                        setShowMoreMenu(false);
+                      }}
+                      className="w-full px-2 py-1.5 rounded-lg flex items-center space-x-2 text-left transition-colors cursor-pointer text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] hover:bg-black/[0.03] dark:hover:bg-white/[0.04]"
+                    >
+                      <Trash size={14} />
+                      <span className="text-[12px]">删除当前列</span>
+                    </button>
+                    <button
+                      type="button"
+                      onMouseDown={(e) => e.preventDefault()}
+                      onClick={() => {
+                        editor.chain().focus().deleteTable().run();
+                        setShowMoreMenu(false);
+                      }}
+                      className="w-full px-2 py-1.5 rounded-lg flex items-center space-x-2 text-left transition-colors cursor-pointer text-red-500/80 hover:text-red-500 hover:bg-red-500/[0.06]"
+                    >
+                      <Trash size={14} />
+                      <span className="text-[12px]">删除整个表格</span>
+                    </button>
+                  </>
+                )}
+
                 <div className="my-1 border-t border-[var(--color-border-panel)]/50" />
 
                 <button
@@ -669,10 +773,24 @@ export const FloatickTiptapEditor: React.FC<FloatickTiptapEditorProps> = ({
         heading: {
           levels: [1, 2, 3],
         },
+        link: {
+          openOnClick: false,
+          autolink: true,
+          linkOnPaste: true,
+        },
+      }),
+      Image.configure({
+        allowBase64: false,
       }),
       Placeholder.configure({
         placeholder: " ",
         showOnlyWhenEditable: true,
+      }),
+      TableKit.configure({
+        table: {
+          resizable: false,
+          renderWrapper: true,
+        },
       }),
       TaskList,
       TaskItem.configure({
