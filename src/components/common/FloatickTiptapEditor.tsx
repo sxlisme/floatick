@@ -808,19 +808,6 @@ export const FloatickTiptapEditor: React.FC<FloatickTiptapEditorProps> = ({
         class: "tiptap focus:outline-none min-h-[160px] pb-12",
         spellcheck: "false",
       },
-      handleDOMEvents: {
-        mousedown: (view, event) => {
-          const target = event.target as HTMLElement;
-          if (target.closest("button,input,textarea,[role='button']")) {
-            return false;
-          }
-
-          window.requestAnimationFrame(() => {
-            view.focus();
-          });
-          return false;
-        },
-      },
       handleKeyDown: (_view, event) => {
         if (event.isComposing || (event as any).keyCode === 229) {
           return false;
@@ -1006,24 +993,9 @@ export const FloatickTiptapEditor: React.FC<FloatickTiptapEditorProps> = ({
     };
   }, [editor, editorRef]);
 
-  const handleEditorSurfaceMouseDown = (event: React.MouseEvent<HTMLDivElement>) => {
-    const target = event.target as HTMLElement;
-    if (target.closest("button,input,textarea,[role='button']")) {
-      return;
-    }
-
-    window.requestAnimationFrame(() => {
-      if (editor && !editor.isDestroyed) {
-        editor.view.focus();
-        editor.commands.focus("end");
-      }
-    });
-  };
-
   return (
     <div
       ref={containerRef}
-      onMouseDownCapture={handleEditorSurfaceMouseDown}
       className={`floatick-editor-shell relative flex-1 flex flex-col min-h-0 select-text ${className}`}
     >
       {showToolbar && <EditorToolbar editor={editor} />}
