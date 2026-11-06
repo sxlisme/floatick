@@ -1,5 +1,6 @@
 mod clipboard;
 pub mod commands;
+pub mod extensions;
 pub mod models;
 mod panel;
 mod platform;
@@ -17,6 +18,7 @@ pub fn run() {
             tray::show_window(app);
         }))
         .plugin(tauri_plugin_opener::init())
+        .plugin(tauri_plugin_dialog::init())
         .plugin(tauri_plugin_autostart::init(
             tauri_plugin_autostart::MacosLauncher::LaunchAgent,
             Some(vec!["--autostart"]),
@@ -111,6 +113,11 @@ pub fn run() {
             commands::get_settings,
             commands::get_storage_path,
             commands::save_settings,
+            commands::list_extensions,
+            commands::import_extension,
+            commands::rename_extension,
+            commands::remove_extension,
+            commands::set_auto_hide_suspended,
             commands::set_window_scale,
             commands::apply_presentation_mode,
             commands::show_main_window,

@@ -70,6 +70,37 @@ pub fn save_settings(settings: AppSettings) -> Result<(), String> {
 }
 
 #[tauri::command]
+pub fn list_extensions() -> Result<Vec<crate::extensions::LocalExtension>, String> {
+    crate::extensions::list_extensions()
+}
+
+#[tauri::command]
+pub fn import_extension(
+    source_path: String,
+    name: String,
+) -> Result<crate::extensions::LocalExtension, String> {
+    crate::extensions::import_extension(&source_path, &name)
+}
+
+#[tauri::command]
+pub fn rename_extension(
+    id: String,
+    name: String,
+) -> Result<crate::extensions::LocalExtension, String> {
+    crate::extensions::rename_extension(&id, &name)
+}
+
+#[tauri::command]
+pub fn remove_extension(id: String) -> Result<(), String> {
+    crate::extensions::remove_extension(&id)
+}
+
+#[tauri::command]
+pub fn set_auto_hide_suspended(suspended: bool) {
+    crate::panel::set_auto_hide_suspended(suspended);
+}
+
+#[tauri::command]
 pub fn set_window_scale(app_handle: AppHandle, panel_scale: f64) -> Result<(), String> {
     crate::tray::resize_main_window(&app_handle, panel_scale)
 }

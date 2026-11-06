@@ -1,5 +1,13 @@
 import { invoke } from "@tauri-apps/api/core";
-import type { TodoItem, TagWorkspace, NoteItem, ClipboardItem, AppSettings, PresentationMode } from "@/types";
+import type {
+  TodoItem,
+  TagWorkspace,
+  NoteItem,
+  ClipboardItem,
+  AppSettings,
+  PresentationMode,
+  LocalExtension,
+} from "@/types";
 
 const isMock = typeof window !== "undefined" && (
   window.location.search.includes("mock") || !("__TAURI_INTERNALS__" in window)
@@ -151,6 +159,8 @@ const MOCK_SETTINGS: AppSettings = {
   panelScale: 1,
 };
 
+let mockExtensions: LocalExtension[] = [];
+
 export const api = {
   // Todos
   getTodos: async (): Promise<TodoItem[]> => {
@@ -200,6 +210,49 @@ export const api = {
   saveSettings: async (settings: AppSettings): Promise<void> => {
     if (isMock) return;
     await invoke("save_settings", { settings });
+  },
+
+  // Local extensions
+  listExtensions: async (): Promise<LocalExtension[]> => {
+    if (isMock) return mockExtensions;
+    return await invoke<LocalExtension[]>("list_extensions");
+  },
+  importExtension: async (sourcePath: string, name: string): Promise<LocalExtension> => {
+    if (isMock) {
+      const extension: LocalExtension = {
+        id: `mock-extension-${Date.now()}`,
+        name,
+        entryPath: sourcePath,
+        entryFile: "index.html",
+        createdAt: new Date().toISOString(),
+      };
+      mockExtensions = [...mockExtensions, extension];
+      return extension;
+    }
+    return await invoke<LocalExtension>("import_extension", { sourcePath, name });
+  },
+  renameExtension: async (id: string, name: string): Promise<LocalExtension> => {
+    if (isMock) {
+      const current = mockExtensions.find((extension) => extension.id === id);
+      if (!current) throw new Error("Extension was not found");
+      const updated = { ...current, name };
+      mockExtensions = mockExtensions.map((extension) =>
+        extension.id === id ? updated : extension
+      );
+      return updated;
+    }
+    return await invoke<LocalExtension>("rename_extension", { id, name });
+  },
+  removeExtension: async (id: string): Promise<void> => {
+    if (isMock) {
+      mockExtensions = mockExtensions.filter((extension) => extension.id !== id);
+      return;
+    }
+    await invoke("remove_extension", { id });
+  },
+  setAutoHideSuspended: async (suspended: boolean): Promise<void> => {
+    if (isMock) return;
+    await invoke("set_auto_hide_suspended", { suspended });
   },
 
   // Window actions

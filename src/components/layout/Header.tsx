@@ -1,6 +1,13 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { Archive, GearSix, CaretUp, PushPin } from "@phosphor-icons/react";
+import {
+  Archive,
+  GearSix,
+  CaretUp,
+  PushPin,
+  PuzzlePiece,
+  SlidersHorizontal,
+} from "@phosphor-icons/react";
 import { FloatickBrandMark } from "@/components/common/FloatickBrandMark";
 import { useTodoStore } from "@/stores/useTodoStore";
 import { useNoteStore } from "@/stores/useNoteStore";
@@ -8,18 +15,40 @@ import { api } from "@/lib/api";
 import { useClipboardStore } from "@/stores/useClipboardStore";
 import { useSettingsStore } from "@/stores/useSettingsStore";
 import { Tooltip } from "@/components/common/Tooltip";
-import type { MainTab } from "@/types";
+import type { LocalExtension, MainTab } from "@/types";
 
 interface HeaderProps {
   activeTab: MainTab;
+  extensions: LocalExtension[];
+  activeExtensionId: string | null;
   onOpenSettings: () => void;
+  onOpenExtensionSettings: () => void;
+  onOpenExtension: (id: string) => void;
 }
 
 export const Header: React.FC<HeaderProps> = ({
   activeTab,
+  extensions,
+  activeExtensionId,
   onOpenSettings,
+  onOpenExtensionSettings,
+  onOpenExtension,
 }) => {
   const { t } = useTranslation();
+  const [showExtensions, setShowExtensions] = useState(false);
+
+  useEffect(() => {
+    if (!showExtensions) return;
+    const handleEscape = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        event.preventDefault();
+        event.stopPropagation();
+        setShowExtensions(false);
+      }
+    };
+    window.addEventListener("keydown", handleEscape, true);
+    return () => window.removeEventListener("keydown", handleEscape, true);
+  }, [showExtensions]);
 
   const todos = useTodoStore((s) => s.todos);
   const activeScope = useTodoStore((s) => s.activeScope);
@@ -37,8 +66,12 @@ export const Header: React.FC<HeaderProps> = ({
   const archivedNoteCount = notes.filter((n) => !!n.archivedAt).length;
 
   const isArchived = activeScope === "archived";
+  const activeExtension = extensions.find((extension) => extension.id === activeExtensionId);
 
   const statusText = (() => {
+    if (activeExtension) {
+      return activeExtension.name;
+    }
     if (activeTab === "clipboard") {
       return t("clipboardCount", { count: clipboardItems.length });
     }
@@ -114,6 +147,87 @@ export const Header: React.FC<HeaderProps> = ({
             <Archive size={18} weight={isArchived ? "fill" : "regular"} />
           </button>
         </Tooltip>
+
+        {/* Extensions */}
+        <div className="relative">
+          <Tooltip content={t("extensions")}>
+            <button
+              type="button"
+              aria-expanded={showExtensions}
+              aria-haspopup="menu"
+              onMouseDown={(event) => event.stopPropagation()}
+              onClick={() => setShowExtensions((visible) => !visible)}
+              className={`w-8 h-8 rounded-lg flex items-center justify-center tactile-btn cursor-pointer ${
+                showExtensions || activeExtensionId
+                  ? "text-[var(--color-teal-primary)] bg-[var(--color-teal-tint-active)]"
+                  : "hover:text-[var(--color-text-primary)] hover:bg-[var(--color-hover-overlay)]"
+              }`}
+            >
+              <PuzzlePiece size={18} weight={activeExtensionId ? "fill" : "regular"} />
+            </button>
+          </Tooltip>
+
+          {showExtensions && (
+            <>
+              <button
+                type="button"
+                aria-label={t("close")}
+                onMouseDown={(event) => event.stopPropagation()}
+                onClick={() => setShowExtensions(false)}
+                className="fixed inset-0 z-40 cursor-default"
+              />
+              <div
+                role="menu"
+                onMouseDown={(event) => event.stopPropagation()}
+                className="absolute right-0 top-full mt-1.5 z-50 w-56 max-h-[320px] overflow-y-auto rounded-lg bg-[var(--color-bg-drawer)] border border-[var(--color-border-drawer)] shadow-2xl p-1.5 no-scrollbar"
+              >
+                <button
+                  type="button"
+                  role="menuitem"
+                  onClick={() => {
+                    setShowExtensions(false);
+                    onOpenExtensionSettings();
+                  }}
+                  className="w-full h-8 px-2 rounded-md flex items-center gap-2 text-left text-[12.5px] text-[var(--color-text-primary)] hover:bg-[var(--color-hover-overlay)] tactile-btn cursor-pointer"
+                >
+                  <SlidersHorizontal size={15} className="text-[var(--color-text-secondary)]" />
+                  <span>{t("extensionSettings")}</span>
+                </button>
+
+                <div className="my-1 border-t border-[var(--color-border-panel)]" />
+
+                {extensions.length === 0 ? (
+                  <div className="px-2 py-5 text-center text-[11.5px] text-[var(--color-text-subtle)]">
+                    {t("noExtensions")}
+                  </div>
+                ) : (
+                  extensions.map((extension) => {
+                    const isActive = extension.id === activeExtensionId;
+                    return (
+                      <button
+                        key={extension.id}
+                        type="button"
+                        role="menuitem"
+                        onClick={() => {
+                          setShowExtensions(false);
+                          onOpenExtension(extension.id);
+                        }}
+                        className={`w-full min-h-8 px-2 py-1.5 rounded-md flex items-center gap-2 text-left tactile-btn cursor-pointer ${
+                          isActive
+                            ? "bg-[var(--color-teal-tint)] text-[var(--color-teal-primary)]"
+                            : "text-[var(--color-text-primary)] hover:bg-[var(--color-hover-overlay)]"
+                        }`}
+                      >
+                        <PuzzlePiece size={14} weight={isActive ? "fill" : "regular"} className="shrink-0" />
+                        <span className="text-[12.5px] truncate">{extension.name}</span>
+                      </button>
+                    );
+                  })
+                )}
+              </div>
+            </>
+          )}
+        </div>
 
         {/* Settings */}
         <Tooltip content={t("settings")}>

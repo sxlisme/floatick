@@ -46,6 +46,14 @@ export interface ClipboardItem {
   favoriteAt?: string | null;
 }
 
+export interface LocalExtension {
+  id: string;
+  name: string;
+  entryPath: string;
+  entryFile: string;
+  createdAt: string;
+}
+
 export type ThemePreference = 'system' | 'light' | 'dark';
 export type LanguagePreference = 'system' | 'zh' | 'en';
 export type PresentationMode = 'panelPersistent' | 'ballPersistent' | 'transient';

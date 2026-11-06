@@ -8,11 +8,14 @@ import { SettingsDrawer } from "@/components/settings/SettingsDrawer";
 import { TagDrawer } from "@/components/tags/TagDrawer";
 import { TodoEditorDrawer } from "@/components/todos/TodoEditorDrawer";
 import { NoteEditorDrawer } from "@/components/notes/NoteEditorDrawer";
+import { ExtensionSettingsDrawer } from "@/components/extensions/ExtensionSettingsDrawer";
+import { ExtensionViewer } from "@/components/extensions/ExtensionViewer";
 import { useSettingsStore } from "@/stores/useSettingsStore";
 import { useTodoStore } from "@/stores/useTodoStore";
 import { useTagStore } from "@/stores/useTagStore";
 import { useNoteStore } from "@/stores/useNoteStore";
 import { useClipboardStore } from "@/stores/useClipboardStore";
+import { useExtensionStore } from "@/stores/useExtensionStore";
 import { api } from "@/lib/api";
 import { FloatickBrandMark } from "@/components/common/FloatickBrandMark";
 import type { MainTab } from "@/types";
@@ -21,6 +24,8 @@ export const App: React.FC = () => {
   const [windowLabel, setWindowLabel] = useState<"main" | "ball" | null>(null);
   const [activeTab, setActiveTab] = useState<MainTab>("todos");
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+  const [isExtensionSettingsOpen, setIsExtensionSettingsOpen] = useState(false);
+  const [activeExtensionId, setActiveExtensionId] = useState<string | null>(null);
   const [isTagDrawerOpen, setIsTagDrawerOpen] = useState(false);
   const [tagDrawerMode, setTagDrawerMode] = useState<"filter" | "assignment" | "manage">("filter");
   const [tagDrawerTargetTodoId, setTagDrawerTargetTodoId] = useState<string | null>(null);
@@ -52,6 +57,9 @@ export const App: React.FC = () => {
   const loadTags = useTagStore((s) => s.loadTags);
   const loadNotes = useNoteStore((s) => s.loadNotes);
   const loadClipboardItems = useClipboardStore((s) => s.loadClipboardItems);
+  const extensions = useExtensionStore((s) => s.extensions);
+  const loadExtensions = useExtensionStore((s) => s.loadExtensions);
+  const activeExtension = extensions.find((extension) => extension.id === activeExtensionId) || null;
 
   useEffect(() => {
     api.getWindowLabel()
@@ -64,6 +72,7 @@ export const App: React.FC = () => {
     loadTags();
     loadNotes();
     loadClipboardItems();
+    void loadExtensions();
 
     const params = new URLSearchParams(window.location.search);
     const initialTab = params.get("tab");
@@ -88,13 +97,32 @@ export const App: React.FC = () => {
         setIsTagDrawerOpen(true);
       }, 150);
     }
-  }, [loadSettings, loadTodos, loadTags, loadNotes, loadClipboardItems]);
+  }, [loadSettings, loadTodos, loadTags, loadNotes, loadClipboardItems, loadExtensions]);
+
+  useEffect(() => {
+    if (activeExtensionId && !extensions.some((extension) => extension.id === activeExtensionId)) {
+      setActiveExtensionId(null);
+    }
+  }, [activeExtensionId, extensions]);
+
+  const handleOpenExtension = (id: string) => {
+    setIsSettingsOpen(false);
+    setIsExtensionSettingsOpen(false);
+    setIsTagDrawerOpen(false);
+    setIsTodoEditorOpen(false);
+    setIsNoteEditorOpen(false);
+    setActiveExtensionId(id);
+  };
 
   // Global Keyboard shortcuts
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       // Esc closes drawers first, then hides window
       if (e.key === "Escape") {
+        if (isExtensionSettingsOpen) {
+          setIsExtensionSettingsOpen(false);
+          return;
+        }
         if (isSettingsOpen) {
           setIsSettingsOpen(false);
           return;
@@ -109,6 +137,10 @@ export const App: React.FC = () => {
         }
         if (isNoteEditorOpen) {
           setIsNoteEditorOpen(false);
+          return;
+        }
+        if (activeExtensionId) {
+          setActiveExtensionId(null);
           return;
         }
         api.hideWindow();
@@ -144,14 +176,28 @@ export const App: React.FC = () => {
       // Cmd+N -> New Item
       if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "n") {
         e.preventDefault();
-        if (isSettingsOpen || isTagDrawerOpen || isTodoEditorOpen || isNoteEditorOpen) return;
+        if (
+          isSettingsOpen ||
+          isExtensionSettingsOpen ||
+          isTagDrawerOpen ||
+          isTodoEditorOpen ||
+          isNoteEditorOpen ||
+          activeExtensionId
+        ) return;
         window.dispatchEvent(new CustomEvent("floatick:new-item"));
       }
     };
 
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [isSettingsOpen, isTagDrawerOpen, isTodoEditorOpen, isNoteEditorOpen]);
+  }, [
+    isSettingsOpen,
+    isExtensionSettingsOpen,
+    isTagDrawerOpen,
+    isTodoEditorOpen,
+    isNoteEditorOpen,
+    activeExtensionId,
+  ]);
 
   const isScreenshotMode =
     typeof window !== "undefined" &&
@@ -235,17 +281,28 @@ export const App: React.FC = () => {
         {/* Panel Header */}
         <Header
           activeTab={activeTab}
+          extensions={extensions}
+          activeExtensionId={activeExtensionId}
           onOpenSettings={() => setIsSettingsOpen(true)}
+          onOpenExtensionSettings={() => setIsExtensionSettingsOpen(true)}
+          onOpenExtension={handleOpenExtension}
         />
 
         {/* Content Switcher Tabs */}
-        <ContentSwitcher
-          selected={activeTab}
-          onSelected={setActiveTab}
-        />
+        {!activeExtension && (
+          <ContentSwitcher
+            selected={activeTab}
+            onSelected={setActiveTab}
+          />
+        )}
 
         {/* Main Content Panels */}
-        {activeTab === "todos" ? (
+        {activeExtension ? (
+          <ExtensionViewer
+            extension={activeExtension}
+            onClose={() => setActiveExtensionId(null)}
+          />
+        ) : activeTab === "todos" ? (
           <TodoPanel
             onOpenTagFilter={handleOpenTagFilter}
             onOpenTagAssignment={handleOpenTagAssignment}
@@ -260,6 +317,12 @@ export const App: React.FC = () => {
         <SettingsDrawer
           isOpen={isSettingsOpen}
           onClose={() => setIsSettingsOpen(false)}
+        />
+
+        <ExtensionSettingsDrawer
+          isOpen={isExtensionSettingsOpen}
+          onClose={() => setIsExtensionSettingsOpen(false)}
+          onOpenExtension={handleOpenExtension}
         />
 
         {/* Todo Editor Full Subview */}

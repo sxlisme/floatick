@@ -29,7 +29,7 @@ pub fn get_storage_dir() -> Result<PathBuf, String> {
     Ok(path)
 }
 
-fn atomic_save<T: serde::Serialize>(file_name: &str, data: &T) -> Result<(), String> {
+pub(crate) fn atomic_save<T: serde::Serialize>(file_name: &str, data: &T) -> Result<(), String> {
     let dir = get_storage_dir()?;
     let target_path = dir.join(file_name);
 

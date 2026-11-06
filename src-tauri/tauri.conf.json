@@ -42,7 +42,13 @@
       }
     ],
     "security": {
-      "csp": null
+      "csp": null,
+      "assetProtocol": {
+        "enable": true,
+        "scope": [
+          "$HOME/.floatick/extensions/**"
+        ]
+      }
     }
   },
   "bundle": {

@@ -25,6 +25,7 @@ impl TrayAction {
 struct PanelState {
     revision: u64,
     tray_action: Option<TrayAction>,
+    auto_hide_suspended: bool,
 }
 
 impl PanelState {
@@ -35,11 +36,16 @@ impl PanelState {
     fn request_blur_hide(&mut self) -> Option<u64> {
         self.cancel_pending_hide();
         // The tray gesture owns visibility until mouse-up, including long presses.
-        self.tray_action.is_none().then_some(self.revision)
+        (self.tray_action.is_none() && !self.auto_hide_suspended).then_some(self.revision)
     }
 
     fn can_hide(&self, revision: u64) -> bool {
-        self.revision == revision && self.tray_action.is_none()
+        self.revision == revision && self.tray_action.is_none() && !self.auto_hide_suspended
+    }
+
+    fn set_auto_hide_suspended(&mut self, suspended: bool) {
+        self.cancel_pending_hide();
+        self.auto_hide_suspended = suspended;
     }
 
     #[cfg(any(not(target_os = "windows"), test))]
@@ -60,10 +66,15 @@ impl PanelState {
 static STATE: Mutex<PanelState> = Mutex::new(PanelState {
     revision: 0,
     tray_action: None,
+    auto_hide_suspended: false,
 });
 
 pub(crate) fn cancel_pending_hide() {
     STATE.lock().unwrap().cancel_pending_hide();
+}
+
+pub(crate) fn set_auto_hide_suspended(suspended: bool) {
+    STATE.lock().unwrap().set_auto_hide_suspended(suspended);
 }
 
 #[cfg(not(target_os = "windows"))]
@@ -172,6 +183,15 @@ mod tests {
         let second = state.request_blur_hide().unwrap();
         assert!(!state.can_hide(first));
         assert!(state.can_hide(second));
+    }
+
+    #[test]
+    fn native_dialog_suspends_blur_hiding() {
+        let mut state = PanelState::default();
+        state.set_auto_hide_suspended(true);
+        assert_eq!(state.request_blur_hide(), None);
+        state.set_auto_hide_suspended(false);
+        assert!(state.request_blur_hide().is_some());
     }
 
     #[test]
