@@ -60,12 +60,15 @@ export const ExtensionViewer: React.FC<ExtensionViewerProps> = ({ extension, onC
   const iframeRef = useRef<HTMLIFrameElement>(null);
 
   const entryUrl = useMemo(() => {
+    if (extension.sourceType === "url") {
+      return extension.entryPath;
+    }
     const theme = readExtensionTheme().theme;
     if (typeof window !== "undefined" && "__TAURI_INTERNALS__" in window) {
       return appendInitialTheme(convertFileSrc(extension.entryPath), theme);
     }
     return appendInitialTheme(extension.entryPath, theme);
-  }, [extension.entryPath, reloadKey]);
+  }, [extension.entryPath, extension.sourceType, reloadKey]);
 
   const syncTheme = useCallback(() => {
     iframeRef.current?.contentWindow?.postMessage(themeMessage, "*");

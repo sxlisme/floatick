@@ -4,6 +4,8 @@ use std::io::{self, Read};
 use std::path::{Component, Path, PathBuf};
 use std::sync::Mutex;
 use std::time::{SystemTime, UNIX_EPOCH};
+use tauri_plugin_opener::OpenerExt;
+use url::{ParseError, Url};
 use zip::ZipArchive;
 
 const REGISTRY_FILE: &str = "extensions.json";
@@ -17,6 +19,7 @@ const MAX_FILE_BYTES: u64 = 50 * 1024 * 1024;
 const MAX_ENTRIES: usize = 5_000;
 const NO_HTML_ERROR: &str = "extension-import:no-html";
 const AMBIGUOUS_HTML_ERROR: &str = "extension-import:ambiguous-html";
+const INVALID_URL_ERROR: &str = "extension-url:invalid";
 static EXTENSIONS_LOCK: Mutex<()> = Mutex::new(());
 
 const THEME_BRIDGE_TAGS: &[u8] = br#"
@@ -113,9 +116,18 @@ const THEME_BRIDGE_JS: &str = r#"(() => {
 pub struct LocalExtension {
     pub id: String,
     pub name: String,
+    pub source_type: ExtensionSource,
     pub entry_path: String,
     pub entry_file: String,
     pub created_at: String,
+}
+
+#[derive(Debug, Clone, Copy, Default, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "lowercase")]
+pub enum ExtensionSource {
+    #[default]
+    Local,
+    Url,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -123,8 +135,12 @@ pub struct LocalExtension {
 struct ExtensionRecord {
     id: String,
     name: String,
+    #[serde(default)]
+    source_type: ExtensionSource,
     #[serde(default = "default_entry_file")]
     entry_file: String,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    url: Option<String>,
     created_at: String,
 }
 
@@ -143,7 +159,7 @@ struct ExtensionRegistry {
 impl Default for ExtensionRegistry {
     fn default() -> Self {
         Self {
-            version: 1,
+            version: 2,
             extensions: Vec::new(),
         }
     }
@@ -216,6 +232,27 @@ fn validate_name(name: &str) -> Result<String, String> {
     Ok(name.to_string())
 }
 
+fn validate_web_url(value: &str) -> Result<String, String> {
+    let value = value.trim();
+    if value.is_empty() {
+        return Err(INVALID_URL_ERROR.to_string());
+    }
+
+    let parsed = match Url::parse(value) {
+        Ok(url) => url,
+        Err(ParseError::RelativeUrlWithoutBase) => {
+            Url::parse(&format!("https://{value}")).map_err(|_| INVALID_URL_ERROR.to_string())?
+        }
+        Err(_) => return Err(INVALID_URL_ERROR.to_string()),
+    };
+
+    if !matches!(parsed.scheme(), "http" | "https") || parsed.host_str().is_none() {
+        return Err(INVALID_URL_ERROR.to_string());
+    }
+
+    Ok(parsed.to_string())
+}
+
 fn is_valid_extension_id(id: &str) -> bool {
     id.starts_with("ext-")
         && id
@@ -242,16 +279,32 @@ fn runtime_entry_relative_path(entry_file: &Path) -> PathBuf {
 }
 
 fn to_local_extension(record: &ExtensionRecord, root: &Path) -> Result<LocalExtension, String> {
-    let entry_file = validate_entry_file(&record.entry_file)?;
+    let (entry_path, entry_file) = match record.source_type {
+        ExtensionSource::Local => {
+            let entry_file = validate_entry_file(&record.entry_file)?;
+            (
+                root.join(&record.id)
+                    .join(runtime_entry_relative_path(entry_file))
+                    .to_string_lossy()
+                    .into_owned(),
+                record.entry_file.clone(),
+            )
+        }
+        ExtensionSource::Url => {
+            let url = record
+                .url
+                .as_deref()
+                .ok_or_else(|| "Extension registry is missing a URL".to_string())?;
+            (validate_web_url(url)?, String::new())
+        }
+    };
+
     Ok(LocalExtension {
         id: record.id.clone(),
         name: record.name.clone(),
-        entry_path: root
-            .join(&record.id)
-            .join(runtime_entry_relative_path(entry_file))
-            .to_string_lossy()
-            .into_owned(),
-        entry_file: record.entry_file.clone(),
+        source_type: record.source_type,
+        entry_path,
+        entry_file,
         created_at: record.created_at.clone(),
     })
 }
@@ -597,6 +650,17 @@ pub fn list_extensions() -> Result<Vec<LocalExtension>, String> {
         if !is_valid_extension_id(&record.id) {
             continue;
         }
+        if record.source_type == ExtensionSource::Url {
+            if record
+                .url
+                .as_deref()
+                .and_then(|url| validate_web_url(url).ok())
+                .is_some()
+            {
+                extensions.push(to_local_extension(record, &root)?);
+            }
+            continue;
+        }
         let Ok(entry_file) = validate_entry_file(&record.entry_file) else {
             continue;
         };
@@ -641,7 +705,9 @@ pub fn import_extension(source_path: &str, name: &str) -> Result<LocalExtension,
         let record = ExtensionRecord {
             id: id.clone(),
             name,
+            source_type: ExtensionSource::Local,
             entry_file,
+            url: None,
             created_at: chrono::Utc::now().to_rfc3339(),
         };
         let mut registry = load_registry_unlocked()?;
@@ -658,6 +724,29 @@ pub fn import_extension(source_path: &str, name: &str) -> Result<LocalExtension,
         let _ = fs::remove_dir_all(&final_directory);
     }
     install_result
+}
+
+pub fn add_url_extension(url: &str, name: &str) -> Result<LocalExtension, String> {
+    let _guard = EXTENSIONS_LOCK
+        .lock()
+        .map_err(|_| "Extensions lock is poisoned".to_string())?;
+    let name = validate_name(name)?;
+    let url = validate_web_url(url)?;
+    let root = extensions_root()?;
+    let id = create_extension_id(&root);
+    let record = ExtensionRecord {
+        id,
+        name,
+        source_type: ExtensionSource::Url,
+        entry_file: String::new(),
+        url: Some(url),
+        created_at: chrono::Utc::now().to_rfc3339(),
+    };
+    let mut registry = load_registry_unlocked()?;
+    registry.version = 2;
+    registry.extensions.push(record.clone());
+    save_registry(&registry)?;
+    to_local_extension(&record, &root)
 }
 
 pub fn rename_extension(id: &str, name: &str) -> Result<LocalExtension, String> {
@@ -714,6 +803,48 @@ pub fn remove_extension(id: &str) -> Result<(), String> {
             .map_err(|error| format!("Extension was removed but cleanup failed: {error}"))?;
     }
     Ok(())
+}
+
+pub fn open_extension_external(app_handle: &tauri::AppHandle, id: &str) -> Result<(), String> {
+    let _guard = EXTENSIONS_LOCK
+        .lock()
+        .map_err(|_| "Extensions lock is poisoned".to_string())?;
+    if !is_valid_extension_id(id) {
+        return Err("Extension identifier is invalid".to_string());
+    }
+
+    let registry = load_registry_unlocked()?;
+    let record = registry
+        .extensions
+        .iter()
+        .find(|record| record.id == id)
+        .ok_or_else(|| "Extension was not found".to_string())?;
+
+    match record.source_type {
+        ExtensionSource::Url => {
+            let url = validate_web_url(
+                record
+                    .url
+                    .as_deref()
+                    .ok_or_else(|| "Extension registry is missing a URL".to_string())?,
+            )?;
+            app_handle
+                .opener()
+                .open_url(url, None::<&str>)
+                .map_err(|error| format!("Failed to open extension in browser: {error}"))
+        }
+        ExtensionSource::Local => {
+            let entry_file = validate_entry_file(&record.entry_file)?;
+            let entry_path = extensions_root()?.join(id).join(entry_file);
+            if !entry_path.is_file() {
+                return Err("Extension entry file was not found".to_string());
+            }
+            app_handle
+                .opener()
+                .open_path(entry_path.to_string_lossy().into_owned(), None::<&str>)
+                .map_err(|error| format!("Failed to open extension in browser: {error}"))
+        }
+    }
 }
 
 #[cfg(test)]
@@ -831,6 +962,28 @@ mod tests {
         .unwrap();
 
         assert_eq!(record.entry_file, "index.html");
+        assert_eq!(record.source_type, ExtensionSource::Local);
+        assert!(record.url.is_none());
+    }
+
+    #[test]
+    fn normalizes_and_restricts_web_extension_urls() {
+        assert_eq!(
+            validate_web_url("example.com/tools").unwrap(),
+            "https://example.com/tools"
+        );
+        assert_eq!(
+            validate_web_url("http://localhost:3000/app").unwrap(),
+            "http://localhost:3000/app"
+        );
+        assert_eq!(
+            validate_web_url("ftp://example.com").unwrap_err(),
+            INVALID_URL_ERROR
+        );
+        assert_eq!(
+            validate_web_url("not a url").unwrap_err(),
+            INVALID_URL_ERROR
+        );
     }
 
     #[test]

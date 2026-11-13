@@ -222,6 +222,7 @@ export const api = {
       const extension: LocalExtension = {
         id: `mock-extension-${Date.now()}`,
         name,
+        sourceType: "local",
         entryPath: sourcePath,
         entryFile: "index.html",
         createdAt: new Date().toISOString(),
@@ -230,6 +231,22 @@ export const api = {
       return extension;
     }
     return await invoke<LocalExtension>("import_extension", { sourcePath, name });
+  },
+  addUrlExtension: async (url: string, name: string): Promise<LocalExtension> => {
+    if (isMock) {
+      const normalizedUrl = /^https?:\/\//i.test(url) ? url : `https://${url}`;
+      const extension: LocalExtension = {
+        id: `mock-extension-${Date.now()}`,
+        name,
+        sourceType: "url",
+        entryPath: normalizedUrl,
+        entryFile: "",
+        createdAt: new Date().toISOString(),
+      };
+      mockExtensions = [...mockExtensions, extension];
+      return extension;
+    }
+    return await invoke<LocalExtension>("add_url_extension", { url, name });
   },
   renameExtension: async (id: string, name: string): Promise<LocalExtension> => {
     if (isMock) {
@@ -249,6 +266,10 @@ export const api = {
       return;
     }
     await invoke("remove_extension", { id });
+  },
+  openExtensionExternal: async (id: string): Promise<void> => {
+    if (isMock) return;
+    await invoke("open_extension_external", { id });
   },
   setAutoHideSuspended: async (suspended: boolean): Promise<void> => {
     if (isMock) return;

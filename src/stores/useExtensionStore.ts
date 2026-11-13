@@ -9,6 +9,7 @@ interface ExtensionState {
   error: string | null;
   loadExtensions: () => Promise<void>;
   importExtension: (sourcePath: string, name: string) => Promise<LocalExtension>;
+  addUrlExtension: (url: string, name: string) => Promise<LocalExtension>;
   renameExtension: (id: string, name: string) => Promise<LocalExtension>;
   removeExtension: (id: string) => Promise<void>;
   clearError: () => void;
@@ -21,6 +22,9 @@ const errorMessage = (error: unknown): string => {
   }
   if (message === "extension-import:ambiguous-html") {
     return i18n.t("extensionAmbiguousHtmlError");
+  }
+  if (message === "extension-url:invalid") {
+    return i18n.t("extensionInvalidUrlError");
   }
   return message;
 };
@@ -44,6 +48,22 @@ export const useExtensionStore = create<ExtensionState>((set) => ({
     set({ loading: true, error: null });
     try {
       const extension = await api.importExtension(sourcePath, name);
+      set((state) => ({
+        extensions: [...state.extensions, extension],
+        loading: false,
+      }));
+      return extension;
+    } catch (error) {
+      const message = errorMessage(error);
+      set({ loading: false, error: message });
+      throw error;
+    }
+  },
+
+  addUrlExtension: async (url, name) => {
+    set({ loading: true, error: null });
+    try {
+      const extension = await api.addUrlExtension(url, name);
       set((state) => ({
         extensions: [...state.extensions, extension],
         loading: false,

@@ -2,8 +2,11 @@ import React, { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import {
   Archive,
+  ArrowSquareOut,
   GearSix,
   CaretUp,
+  FileHtml,
+  GlobeSimple,
   PushPin,
   PuzzlePiece,
   SlidersHorizontal,
@@ -179,7 +182,7 @@ export const Header: React.FC<HeaderProps> = ({
               <div
                 role="menu"
                 onMouseDown={(event) => event.stopPropagation()}
-                className="absolute right-0 top-full mt-1.5 z-50 w-56 max-h-[320px] overflow-y-auto rounded-lg bg-[var(--color-bg-drawer)] border border-[var(--color-border-drawer)] shadow-2xl p-1.5 no-scrollbar"
+                className="absolute right-0 top-full mt-1.5 z-50 w-64 max-h-[320px] overflow-y-auto rounded-lg bg-[var(--color-bg-drawer)] border border-[var(--color-border-drawer)] shadow-2xl p-1.5 no-scrollbar"
               >
                 <button
                   type="button"
@@ -203,24 +206,58 @@ export const Header: React.FC<HeaderProps> = ({
                 ) : (
                   extensions.map((extension) => {
                     const isActive = extension.id === activeExtensionId;
+                    const isUrl = extension.sourceType === "url";
                     return (
-                      <button
+                      <div
                         key={extension.id}
-                        type="button"
-                        role="menuitem"
-                        onClick={() => {
-                          setShowExtensions(false);
-                          onOpenExtension(extension.id);
-                        }}
-                        className={`w-full min-h-8 px-2 py-1.5 rounded-md flex items-center gap-2 text-left tactile-btn cursor-pointer ${
+                        role="none"
+                        className={`group w-full min-h-9 rounded-md flex items-center transition-colors ${
                           isActive
                             ? "bg-[var(--color-teal-tint)] text-[var(--color-teal-primary)]"
                             : "text-[var(--color-text-primary)] hover:bg-[var(--color-hover-overlay)]"
                         }`}
                       >
-                        <PuzzlePiece size={14} weight={isActive ? "fill" : "regular"} className="shrink-0" />
-                        <span className="text-[12.5px] truncate">{extension.name}</span>
-                      </button>
+                        <button
+                          type="button"
+                          role="menuitem"
+                          onClick={() => {
+                            setShowExtensions(false);
+                            onOpenExtension(extension.id);
+                          }}
+                          className="min-w-0 flex-1 self-stretch px-2 py-1.5 flex items-center gap-2 text-left tactile-btn cursor-pointer"
+                        >
+                          <span
+                            className={`w-6 h-6 rounded-md flex items-center justify-center shrink-0 ${
+                              isUrl
+                                ? "bg-sky-500/10 text-sky-500"
+                                : "bg-[var(--color-teal-tint)] text-[var(--color-teal-primary)]"
+                            }`}
+                          >
+                            {isUrl ? (
+                              <GlobeSimple size={14} weight="bold" />
+                            ) : (
+                              <FileHtml size={14} weight="bold" />
+                            )}
+                          </span>
+                          <span className="text-[12.5px] truncate">{extension.name}</span>
+                        </button>
+                        <Tooltip content={t("openInBrowser")}>
+                          <button
+                            type="button"
+                            role="menuitem"
+                            aria-label={t("openInBrowser")}
+                            onClick={() => {
+                              setShowExtensions(false);
+                              void api.openExtensionExternal(extension.id).catch((error) => {
+                                console.error("Failed to open extension externally", error);
+                              });
+                            }}
+                            className="w-8 h-8 mr-0.5 rounded-md shrink-0 flex items-center justify-center text-[var(--color-text-subtle)] hover:text-[var(--color-text-primary)] hover:bg-[var(--color-bg-elevated)] tactile-btn cursor-pointer"
+                          >
+                            <ArrowSquareOut size={14} weight="bold" />
+                          </button>
+                        </Tooltip>
+                      </div>
                     );
                   })
                 )}

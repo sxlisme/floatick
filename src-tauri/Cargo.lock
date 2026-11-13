@@ -1098,7 +1098,7 @@ dependencies = [
 
 [[package]]
 name = "floatick"
-version = "0.6.0"
+version = "0.7.0"
 dependencies = [
  "chrono",
  "dirs 6.0.0",
@@ -1116,6 +1116,7 @@ dependencies = [
  "tauri-plugin-log",
  "tauri-plugin-opener",
  "tauri-plugin-single-instance",
+ "url",
  "zip",
 ]
 

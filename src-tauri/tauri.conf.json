@@ -1,7 +1,7 @@
 {
   "$schema": "../node_modules/@tauri-apps/cli/config.schema.json",
   "productName": "Floatick",
-  "version": "0.6.0",
+  "version": "0.7.0",
   "identifier": "io.github.lucaslushuo.floatick",
   "build": {
     "frontendDist": "../dist",
@@ -62,7 +62,7 @@
       "icons/icon.ico"
     ],
     "macOS": {
-      "bundleVersion": "15",
+      "bundleVersion": "16",
       "minimumSystemVersion": "10.15"
     },
     "windows": {

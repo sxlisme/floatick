@@ -49,6 +49,7 @@ export interface ClipboardItem {
 export interface LocalExtension {
   id: string;
   name: string;
+  sourceType: "local" | "url";
   entryPath: string;
   entryFile: string;
   createdAt: string;

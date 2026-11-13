@@ -83,6 +83,14 @@ pub fn import_extension(
 }
 
 #[tauri::command]
+pub fn add_url_extension(
+    url: String,
+    name: String,
+) -> Result<crate::extensions::LocalExtension, String> {
+    crate::extensions::add_url_extension(&url, &name)
+}
+
+#[tauri::command]
 pub fn rename_extension(
     id: String,
     name: String,
@@ -93,6 +101,11 @@ pub fn rename_extension(
 #[tauri::command]
 pub fn remove_extension(id: String) -> Result<(), String> {
     crate::extensions::remove_extension(&id)
+}
+
+#[tauri::command]
+pub fn open_extension_external(app_handle: AppHandle, id: String) -> Result<(), String> {
+    crate::extensions::open_extension_external(&app_handle, &id)
 }
 
 #[tauri::command]
