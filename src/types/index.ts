@@ -67,4 +67,5 @@ export interface AppSettings {
   collapseWhenClickingOutside: boolean;
   presentationMode: PresentationMode;
   panelScale: number;
+  extensionBackgroundLimit: number;
 }

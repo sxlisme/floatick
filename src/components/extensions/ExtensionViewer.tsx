@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { convertFileSrc } from "@tauri-apps/api/core";
-import { ArrowLeft, ArrowClockwise } from "@phosphor-icons/react";
+import { ArrowLeft, ArrowClockwise, X } from "@phosphor-icons/react";
 import { useTranslation } from "react-i18next";
 import { Tooltip } from "@/components/common/Tooltip";
 import type { LocalExtension } from "@/types";
@@ -8,6 +8,7 @@ import type { LocalExtension } from "@/types";
 interface ExtensionViewerProps {
   extension: LocalExtension;
   onClose: () => void;
+  onTerminate: () => void;
 }
 
 type ResolvedTheme = "light" | "dark";
@@ -52,7 +53,11 @@ function appendInitialTheme(url: string, theme: ResolvedTheme): string {
   return `${url}${separator}floatickTheme=${theme}`;
 }
 
-export const ExtensionViewer: React.FC<ExtensionViewerProps> = ({ extension, onClose }) => {
+export const ExtensionViewer: React.FC<ExtensionViewerProps> = ({
+  extension,
+  onClose,
+  onTerminate,
+}) => {
   const { t } = useTranslation();
   const [reloadKey, setReloadKey] = useState(0);
   const [loading, setLoading] = useState(true);
@@ -106,7 +111,7 @@ export const ExtensionViewer: React.FC<ExtensionViewerProps> = ({ extension, onC
     <section className="flex-1 min-h-0 flex flex-col bg-[var(--color-bg-panel)]">
       <div className="h-10 px-3 border-b border-[var(--color-border-panel)] flex items-center justify-between shrink-0 bg-[var(--color-bg-panel)]">
         <div className="flex items-center min-w-0">
-          <Tooltip content={t("back")}>
+          <Tooltip content={t("backKeepExtensionRunning")}>
             <button
               type="button"
               aria-label={t("back")}
@@ -120,19 +125,31 @@ export const ExtensionViewer: React.FC<ExtensionViewerProps> = ({ extension, onC
             {extension.name}
           </span>
         </div>
-        <Tooltip content={t("reloadExtension")}>
-          <button
-            type="button"
-            aria-label={t("reloadExtension")}
-            onClick={() => {
-              setLoading(true);
-              setReloadKey((key) => key + 1);
-            }}
-            className="w-7 h-7 rounded-lg flex items-center justify-center text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] hover:bg-[var(--color-hover-overlay)] tactile-btn cursor-pointer"
-          >
-            <ArrowClockwise size={15} weight="bold" />
-          </button>
-        </Tooltip>
+        <div className="flex items-center gap-0.5">
+          <Tooltip content={t("reloadExtension")}>
+            <button
+              type="button"
+              aria-label={t("reloadExtension")}
+              onClick={() => {
+                setLoading(true);
+                setReloadKey((key) => key + 1);
+              }}
+              className="w-7 h-7 rounded-lg flex items-center justify-center text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] hover:bg-[var(--color-hover-overlay)] tactile-btn cursor-pointer"
+            >
+              <ArrowClockwise size={15} weight="bold" />
+            </button>
+          </Tooltip>
+          <Tooltip content={t("closeExtension")}>
+            <button
+              type="button"
+              aria-label={t("closeExtension")}
+              onClick={onTerminate}
+              className="w-7 h-7 rounded-lg flex items-center justify-center text-[var(--color-text-secondary)] hover:text-red-500 hover:bg-red-500/8 tactile-btn cursor-pointer"
+            >
+              <X size={15} weight="bold" />
+            </button>
+          </Tooltip>
+        </div>
       </div>
 
       <div className="relative flex-1 min-h-0 bg-[var(--color-bg-panel)]">
@@ -151,6 +168,7 @@ export const ExtensionViewer: React.FC<ExtensionViewerProps> = ({ extension, onC
             setLoading(false);
           }}
           sandbox="allow-scripts allow-same-origin allow-forms allow-modals allow-popups allow-downloads"
+          allow="screen-wake-lock"
           referrerPolicy="no-referrer"
           style={{ colorScheme: themeMessage.theme }}
           className="w-full h-full border-0 bg-[var(--color-bg-panel)]"

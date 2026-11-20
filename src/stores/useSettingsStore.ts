@@ -13,7 +13,13 @@ interface SettingsState {
   updateCollapseOnBlur: (collapse: boolean) => Promise<void>;
   updatePresentationMode: (presentationMode: PresentationMode) => Promise<void>;
   updatePanelScale: (panelScale: number) => Promise<void>;
+  updateExtensionBackgroundLimit: (limit: number) => Promise<void>;
 }
+
+export const MAX_EXTENSION_BACKGROUND_LIMIT = 20;
+
+const normalizeExtensionBackgroundLimit = (limit: number): number =>
+  Math.min(MAX_EXTENSION_BACKGROUND_LIMIT, Math.max(0, Math.round(limit)));
 
 const defaultSettings: AppSettings = {
   theme: "system",
@@ -22,6 +28,7 @@ const defaultSettings: AppSettings = {
   collapseWhenClickingOutside: true,
   presentationMode: "transient",
   panelScale: 1,
+  extensionBackgroundLimit: 3,
 };
 
 function applyTheme(theme: ThemePreference) {
@@ -87,6 +94,9 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
     try {
       const data = await api.getSettings();
       const current = { ...defaultSettings, ...data };
+      current.extensionBackgroundLimit = normalizeExtensionBackgroundLimit(
+        current.extensionBackgroundLimit
+      );
       set({ settings: current, isLoaded: true });
       applyTheme(current.theme);
       applyLanguage(current.language);
@@ -143,5 +153,12 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
     set({ settings: next });
     await api.saveSettings(next);
     await api.setWindowScale(panelScale);
+  },
+
+  updateExtensionBackgroundLimit: async (limit: number) => {
+    const extensionBackgroundLimit = normalizeExtensionBackgroundLimit(limit);
+    const next = { ...get().settings, extensionBackgroundLimit };
+    set({ settings: next });
+    await api.saveSettings(next);
   },
 }));

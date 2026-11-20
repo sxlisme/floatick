@@ -157,6 +157,7 @@ const MOCK_SETTINGS: AppSettings = {
   collapseWhenClickingOutside: true,
   presentationMode: "transient",
   panelScale: 1,
+  extensionBackgroundLimit: 3,
 };
 
 let mockExtensions: LocalExtension[] = [];

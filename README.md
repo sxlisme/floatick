@@ -1,136 +1,142 @@
 <div align="center">
   <h1>
-    <img src="./docs/assets/app-icon.png" width="36" height="36" align="absmiddle" alt="Floatick Icon" />
+    <img src="./docs/assets/app-icon.png" width="36" height="36" align="absmiddle" alt="Floatick icon" />
     Floatick
   </h1>
-  <p><strong>Lightweight tray-based todos & notes for macOS and Windows</strong></p>
-  <p>Capture fast. Finish with focus. Local-first · Fast & Minimal · Open Source</p>
+  <p><strong>A local-first floating productivity workspace for macOS and Windows</strong></p>
+  <p>Todos · Markdown notes · Clipboard history · Local and web extensions</p>
   <p>
     <a href="https://github.com/sxlisme/floatick/actions/workflows/ci.yml">
-      <img src="https://github.com/sxlisme/floatick/actions/workflows/ci.yml/badge.svg" alt="CI Status" />
+      <img src="https://github.com/sxlisme/floatick/actions/workflows/ci.yml/badge.svg" alt="CI status" />
+    </a>
+    <a href="https://github.com/sxlisme/floatick/releases/latest">
+      <img src="https://img.shields.io/github/v/release/sxlisme/floatick" alt="Latest release" />
     </a>
     <img src="https://img.shields.io/badge/macOS-10.15%2B-111111?logo=apple" alt="macOS 10.15+" />
     <img src="https://img.shields.io/badge/Windows-10%2B-0078D4?logo=windows" alt="Windows 10+" />
     <img src="https://img.shields.io/badge/Tauri-v2-24C8D8?logo=tauri" alt="Tauri v2" />
-    <img src="https://img.shields.io/badge/Rust-1.80%2B-DEA584?logo=rust" alt="Rust 1.80+" />
-    <img src="https://img.shields.io/badge/React-19-61DAFB?logo=react" alt="React 19" />
-    <img src="https://img.shields.io/badge/TypeScript-5.x-3178C6?logo=typescript" alt="TypeScript 5.x" />
-    <a href="./LICENSE">
-      <img src="https://img.shields.io/badge/license-MIT-00C7B7" alt="MIT License" />
-    </a>
+    <a href="./LICENSE"><img src="https://img.shields.io/badge/license-MIT-00C7B7" alt="MIT license" /></a>
   </p>
-  <p>
-    <strong>English</strong> · <a href="./README.zh-CN.md">简体中文</a>
-  </p>
+  <p><strong>English</strong> · <a href="./README.zh-CN.md">简体中文</a></p>
 </div>
 
-<p align="center">
-  <img src="./docs/assets/floatick-showcase.png" width="100%" alt="Floatick Menu Bar Todos, TipTap Markdown Editor, and Quick Notes" />
-</p>
+## Screenshots
 
-Floatick is a lightweight, local-first productivity app for macOS and Windows. It rests quietly in your menu bar or notification area. One click opens a focused workspace beside the tray icon. No heavy setup or cloud sign-up, just fast capture and effortless follow-through.
+<table>
+  <tr>
+    <td width="50%" align="center">
+      <img src="./docs/assets/screenshots/floatick-main-view.png" alt="Floatick main workspace and search" />
+      <br /><sub>Main workspace and search</sub>
+    </td>
+    <td width="50%" align="center">
+      <img src="./docs/assets/screenshots/floatick-extension-menu.png" alt="Floatick extension menu" />
+      <br /><sub>Local and URL extensions with background state</sub>
+    </td>
+  </tr>
+  <tr>
+    <td width="50%" align="center">
+      <img src="./docs/assets/screenshots/floatick-extension-import.png" alt="Floatick extension import settings" />
+      <br /><sub>Folder, ZIP, and URL extension import</sub>
+    </td>
+    <td width="50%" align="center">
+      <img src="./docs/assets/screenshots/floatick-settings-view.png" alt="Floatick appearance and behavior settings" />
+      <br /><sub>Appearance, presentation mode, scaling, and background limits</sub>
+    </td>
+  </tr>
+</table>
 
-## Key Features
+Floatick stays in the macOS menu bar or Windows notification area and opens as a compact floating workspace. It is designed for quick capture and repeated daily use without an account or a built-in cloud service.
 
-- **Native System Tray**: Sits quietly in the macOS menu bar or Windows notification area. Click to open beside the tray icon without cluttering the Dock or taskbar.
-- **Full-Width Cards & Floating Capsules**: Task titles span the full row width without premature truncation. Hovering smoothly reveals frosted action capsules (deadline, edit, copy markdown, delete).
-- **Separated Browsing & Editing**: Check off tasks instantly in the list; open the full TipTap editor drawer on demand via double-click or `⌘N`.
-- **TipTap Markdown & Slash Commands**: Press `/` for interactive checklists, headings, code blocks, and quotes with instant formatting.
-- **Deadlines without Noise**: Set due dates directly on task rows. Overdue items stay clearly highlighted without intrusive notification popups.
-- **Quick Notes & Shared Tags**: Capture snippets and thoughts grouped by date. Reusable color tags work across both todos and notes.
-- **Local-First Privacy**: No accounts, no cloud sync, no tracking. All data is saved as plain, readable JSON in `~/.floatick`.
-- **Fast, Lightweight & Native**: Built with Tauri 2 and Rust with a sub-30MB idle footprint, smooth 120Hz animations, and optional launch at login.
+## Features
 
-## Download & Installation
+### Todos and notes
 
-Download the latest installer from [GitHub Releases](https://github.com/sxlisme/floatick/releases):
+- Create, search, tag, complete, archive, and restore todos and notes.
+- Add deadlines and reminders while keeping completed work available in the archive.
+- Write with a TipTap-based Markdown editor that supports headings, lists, task lists, links, quotes, code, images, and tables.
+- Paste GitHub Flavored Markdown tables, use the formatting toolbar, or type `/` to insert common blocks.
+- Preview rendered Markdown and copy todo content as Markdown.
 
-- macOS: use the Universal DMG for both Apple silicon and Intel Macs, then drag Floatick to `Applications`.
-- Windows: use the x64 NSIS setup executable. Windows 10 and later are supported.
+### Clipboard history
 
-> **First-Launch Note for macOS**:
-> If macOS displays an "unidentified developer" warning, open **System Settings → Privacy & Security**, scroll down to **Security**, and click **Open Anyway** (only required on first launch).
+- Automatically records plain-text clipboard history on macOS and Windows.
+- Search, select, copy, delete, and favorite saved clips.
+- Non-favorite clips expire after 7 days; favorites are retained until removed.
 
-## Shortcuts & Controls
+### Floating workspace
 
-| Action | Shortcut / Gesture | Description |
+- Use a persistent panel, persistent floating ball, or transient tray panel.
+- Remembers the last valid panel and floating-ball positions across launches.
+- Supports window pinning, 50%-150% panel scaling, launch at login, light/dark/system themes, and Chinese/English UI.
+- Runs as a single app instance; launching Floatick again brings the existing window to the foreground.
+
+### Extensions
+
+- Import a folder or ZIP containing `index.html`.
+- If no `index.html` exists, a folder with exactly one `.html` or `.htm` file uses that file as its entry.
+- Add HTTP or HTTPS pages as URL extensions.
+- Rename extensions, distinguish local and web sources, and open either source in the system browser.
+- Imported local pages receive Floatick theme tokens and theme-change events.
+- Visited extensions can remain mounted in the background so switching views does not reset their state.
+- Configure `0-20` background extensions. `0` disables background sessions; exceeding the limit closes the oldest background page first.
+- Uses the operating system webview: WebView2 on Windows and WKWebView on macOS. Extension iframes allow Screen Wake Lock where the webview and page support it.
+
+## Download
+
+Permanent installers are published in [GitHub Releases](https://github.com/sxlisme/floatick/releases/latest):
+
+- [Download Floatick for Windows (x64 setup)](https://github.com/sxlisme/floatick/releases/latest/download/Floatick-windows-x64-setup.exe)
+- [Download Floatick for macOS (Universal DMG)](https://github.com/sxlisme/floatick/releases/latest/download/Floatick-macos-universal.dmg)
+
+CI artifacts are intended for temporary test builds. Stable release assets remain attached to the corresponding GitHub Release.
+
+On macOS, if Gatekeeper blocks the first launch, open **System Settings → Privacy & Security** and choose **Open Anyway** for Floatick.
+
+## Shortcuts
+
+| Action | macOS | Windows |
 | --- | --- | --- |
-| **Toggle Window** | Click Menu Bar Icon | Toggle Floatick panel under the status tray |
-| **New Item** | `⌘N` / `Ctrl+N` | Open editor drawer (Todo or Note) |
-| **Edit Item** | Double-click / Hover ✏️ | Open TipTap editor drawer for existing item |
-| **Save & Close** | `⌘ ⏎` / `Ctrl+Enter` | Save current item and close drawer |
-| **Close / Dismiss** | `Esc` | Closes active drawer first, then collapses panel |
-| **Search Workspace** | `⌘F` / `Ctrl+F` | Focus search bar |
-| **Switch Tabs** | `Tab` / `⌘1`, `⌘2` / `Ctrl+1`, `Ctrl+2` | Toggle between Todos and Notes views |
-| **Preferences** | `⌘,` / `Ctrl+,` | Open Settings drawer (Theme, autostart, pin) |
-| **Slash Commands** | Type `/` in editor | Insert task lists, headings, code blocks, quotes |
-| **Set Deadline** | Click ⏰ on hover | Open date & time picker directly on row |
-| **Copy Markdown** | Click ⎘ on hover | Copy title and content as clean Markdown |
-| **Quit Floatick** | Right-click tray / Settings | Quit the application |
+| New todo or note | `⌘N` | `Ctrl+N` |
+| Save editor | `⌘Enter` | `Ctrl+Enter` |
+| Focus search | `⌘F` | `Ctrl+F` |
+| Todos / Notes / Clipboard | `⌘1` / `⌘2` / `⌘3` | `Ctrl+1` / `Ctrl+2` / `Ctrl+3` |
+| Open settings | `⌘,` | `Ctrl+,` |
+| Close the current view or hide the panel | `Esc` | `Esc` |
 
-## Local Data & Privacy
+## Local Data and Privacy
 
-Floatick automatically creates human-readable JSON files in your home directory on first launch:
+Floatick stores its own data as readable JSON under `~/.floatick`:
 
-| File Path | Purpose |
+| Path | Purpose |
 | --- | --- |
-| `~/.floatick/todos.json` | Todos, completion status, deadlines, reminders, and archives |
-| `~/.floatick/notes.json` | Notes content, color tags, pinning, and archives |
-| `~/.floatick/tags.json` | Reusable color tags shared between todos and notes |
-| `~/.floatick/settings.json` | Theme (system/light/dark), language, autostart, and stay-on-top |
+| `todos.json` | Todos, completion state, deadlines, reminders, and archives |
+| `notes.json` | Notes and note metadata |
+| `tags.json` | Shared todo and note tags |
+| `clipboard.json` | Plain-text clipboard history and favorites |
+| `settings.json` | Appearance and behavior preferences |
+| `window-state.json` | Saved panel and floating-ball positions |
+| `extensions.json` and `extensions/` | Extension registry and imported local files |
 
-Your data never leaves your computer. Floatick operates completely offline and collects zero telemetry.
+Floatick does not require an account and does not include cloud sync. Imported local extensions stay on the device. URL extensions are web pages and may communicate with their own servers according to those pages' behavior.
 
 ## Development
 
-### Requirements
-
-- macOS 10.15+ or Windows 10+
-- [Node.js](https://nodejs.org/) 18+ and [pnpm](https://pnpm.io/)
-- [Rust](https://www.rust-lang.org/) (1.80+) and Cargo
-
-### Local Setup
+Requirements: Node.js 22+, pnpm 11+, the stable Rust toolchain, and the platform prerequisites listed in the [Tauri documentation](https://v2.tauri.app/start/prerequisites/).
 
 ```bash
-# 1. Install dependencies
-pnpm install
-
-# 2. Start Tauri development server (with hot reload)
+pnpm install --frozen-lockfile
 pnpm tauri:dev
 ```
 
-### Production Build
+Useful checks:
 
 ```bash
-# Build the native bundles for the current platform
-pnpm tauri:build
+pnpm build
+cargo test --manifest-path src-tauri/Cargo.toml --locked
+cargo clippy --manifest-path src-tauri/Cargo.toml --all-targets --locked -- -D warnings
 ```
 
-macOS bundles are written under `src-tauri/target/release/bundle/macos/` and `.../dmg/`. Windows installers are written under `src-tauri/target/release/bundle/nsis/`.
-
-## Project Structure
-
-```text
-src/                          # Frontend (React 19 + TypeScript + Vite + Tailwind CSS)
-  components/
-    common/                   # TipTap editor, search bar, common UI components
-    layout/                   # Header, ContentSwitcher, window frame
-    notes/                    # Note list, note rows, note editor drawer
-    settings/                 # Preferences drawer (theme, language, autostart)
-    tags/                     # Tag management & filtering
-    todos/                    # Todo list, item rows, deadline picker, editor drawer
-  stores/                     # Zustand state management
-  i18n/                       # Localization resources (English and Chinese)
-  lib/                        # Tauri IPC API bindings
-src-tauri/                    # Native Backend (Rust + Tauri 2.x)
-  src/
-    tray.rs                   # macOS/Windows system tray & window anchoring
-    storage.rs                # Atomic JSON file persistence in ~/.floatick
-    commands.rs               # IPC commands exposed to frontend
-    lib.rs                    # Window lifecycle & auto-dismiss on blur
-website/                      # Marketing website (Astro)
-docs/                         # Design specifications and architecture guides
-```
+Create a native installer for the current platform with `pnpm tauri:build`. Windows NSIS installers are written under `src-tauri/target/release/bundle/nsis/`; macOS bundles are written under `src-tauri/target/release/bundle/`.
 
 ## License
 

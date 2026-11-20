@@ -20,12 +20,28 @@ import { api } from "@/lib/api";
 import { FloatickBrandMark } from "@/components/common/FloatickBrandMark";
 import type { MainTab } from "@/types";
 
+const enforceExtensionBackgroundLimit = (
+  ids: string[],
+  activeId: string | null,
+  limit: number
+): string[] => {
+  const backgroundLimit = Math.max(0, Math.round(limit));
+  if (backgroundLimit === 0) {
+    return activeId && ids.includes(activeId) ? [activeId] : [];
+  }
+
+  const backgroundIds = ids.filter((id) => id !== activeId);
+  const keptBackgroundIds = new Set(backgroundIds.slice(-backgroundLimit));
+  return ids.filter((id) => id === activeId || keptBackgroundIds.has(id));
+};
+
 export const App: React.FC = () => {
   const [windowLabel, setWindowLabel] = useState<"main" | "ball" | null>(null);
   const [activeTab, setActiveTab] = useState<MainTab>("todos");
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [isExtensionSettingsOpen, setIsExtensionSettingsOpen] = useState(false);
   const [activeExtensionId, setActiveExtensionId] = useState<string | null>(null);
+  const [openExtensionIds, setOpenExtensionIds] = useState<string[]>([]);
   const [isTagDrawerOpen, setIsTagDrawerOpen] = useState(false);
   const [tagDrawerMode, setTagDrawerMode] = useState<"filter" | "assignment" | "manage">("filter");
   const [tagDrawerTargetTodoId, setTagDrawerTargetTodoId] = useState<string | null>(null);
@@ -57,9 +73,16 @@ export const App: React.FC = () => {
   const loadTags = useTagStore((s) => s.loadTags);
   const loadNotes = useNoteStore((s) => s.loadNotes);
   const loadClipboardItems = useClipboardStore((s) => s.loadClipboardItems);
+  const extensionBackgroundLimit = useSettingsStore(
+    (s) => s.settings.extensionBackgroundLimit
+  );
   const extensions = useExtensionStore((s) => s.extensions);
   const loadExtensions = useExtensionStore((s) => s.loadExtensions);
   const activeExtension = extensions.find((extension) => extension.id === activeExtensionId) || null;
+  const openExtensions = openExtensionIds.flatMap((id) => {
+    const extension = extensions.find((candidate) => candidate.id === id);
+    return extension ? [extension] : [];
+  });
 
   useEffect(() => {
     api.getWindowLabel()
@@ -103,7 +126,19 @@ export const App: React.FC = () => {
     if (activeExtensionId && !extensions.some((extension) => extension.id === activeExtensionId)) {
       setActiveExtensionId(null);
     }
-  }, [activeExtensionId, extensions]);
+    setOpenExtensionIds((current) => {
+      const installedIds = new Set(extensions.map((extension) => extension.id));
+      const installed = current.filter((id) => installedIds.has(id));
+      const next = enforceExtensionBackgroundLimit(
+        installed,
+        activeExtensionId,
+        extensionBackgroundLimit
+      );
+      return next.length === current.length && next.every((id, index) => id === current[index])
+        ? current
+        : next;
+    });
+  }, [activeExtensionId, extensionBackgroundLimit, extensions]);
 
   const handleOpenExtension = (id: string) => {
     setIsSettingsOpen(false);
@@ -111,7 +146,13 @@ export const App: React.FC = () => {
     setIsTagDrawerOpen(false);
     setIsTodoEditorOpen(false);
     setIsNoteEditorOpen(false);
+    setOpenExtensionIds((current) => (current.includes(id) ? current : [...current, id]));
     setActiveExtensionId(id);
+  };
+
+  const handleCloseExtension = (id: string) => {
+    setOpenExtensionIds((current) => current.filter((candidate) => candidate !== id));
+    setActiveExtensionId((current) => (current === id ? null : current));
   };
 
   // Global Keyboard shortcuts
@@ -283,6 +324,7 @@ export const App: React.FC = () => {
           activeTab={activeTab}
           extensions={extensions}
           activeExtensionId={activeExtensionId}
+          openExtensionIds={openExtensionIds}
           onOpenSettings={() => setIsSettingsOpen(true)}
           onOpenExtensionSettings={() => setIsExtensionSettingsOpen(true)}
           onOpenExtension={handleOpenExtension}
@@ -297,21 +339,35 @@ export const App: React.FC = () => {
         )}
 
         {/* Main Content Panels */}
-        {activeExtension ? (
-          <ExtensionViewer
-            extension={activeExtension}
-            onClose={() => setActiveExtensionId(null)}
-          />
-        ) : activeTab === "todos" ? (
-          <TodoPanel
-            onOpenTagFilter={handleOpenTagFilter}
-            onOpenTagAssignment={handleOpenTagAssignment}
-          />
-        ) : activeTab === "notes" ? (
-          <NotePanel onOpenTagFilter={handleOpenTagFilter} />
-        ) : (
-          <ClipboardPanel />
-        )}
+        {!activeExtension &&
+          (activeTab === "todos" ? (
+            <TodoPanel
+              onOpenTagFilter={handleOpenTagFilter}
+              onOpenTagAssignment={handleOpenTagAssignment}
+            />
+          ) : activeTab === "notes" ? (
+            <NotePanel onOpenTagFilter={handleOpenTagFilter} />
+          ) : (
+            <ClipboardPanel />
+          ))}
+
+        {/* Keep visited extension iframes mounted so switching does not reset their state. */}
+        {openExtensions.map((extension) => {
+          const isActive = extension.id === activeExtensionId;
+          return (
+            <div
+              key={extension.id}
+              aria-hidden={!isActive}
+              className={`${isActive ? "flex" : "hidden"} flex-1 min-h-0 flex-col`}
+            >
+              <ExtensionViewer
+                extension={extension}
+                onClose={() => setActiveExtensionId(null)}
+                onTerminate={() => handleCloseExtension(extension.id)}
+              />
+            </div>
+          );
+        })}
 
         {/* Settings Drawer */}
         <SettingsDrawer

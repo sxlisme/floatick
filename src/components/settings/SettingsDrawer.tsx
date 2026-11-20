@@ -9,11 +9,17 @@ import {
   Check,
   SignOut,
   ArrowCounterClockwise,
+  Minus,
+  Plus,
 } from "@phosphor-icons/react";
-import { useSettingsStore } from "@/stores/useSettingsStore";
+import {
+  MAX_EXTENSION_BACKGROUND_LIMIT,
+  useSettingsStore,
+} from "@/stores/useSettingsStore";
 import { api } from "@/lib/api";
 import { Tooltip } from "@/components/common/Tooltip";
 import type { ThemePreference, LanguagePreference, PresentationMode } from "@/types";
+import packageMetadata from "../../../package.json";
 
 interface SettingsDrawerProps {
   isOpen: boolean;
@@ -52,11 +58,17 @@ export const SettingsDrawer: React.FC<SettingsDrawerProps> = ({
   const updateAlwaysOnTop = useSettingsStore((s) => s.updateAlwaysOnTop);
   const updatePresentationMode = useSettingsStore((s) => s.updatePresentationMode);
   const updatePanelScale = useSettingsStore((s) => s.updatePanelScale);
+  const updateExtensionBackgroundLimit = useSettingsStore(
+    (s) => s.updateExtensionBackgroundLimit
+  );
 
   const [autostart, setAutostart] = useState(false);
   const [copiedPath, setCopiedPath] = useState(false);
   const [storagePath, setStoragePath] = useState("~/.floatick");
   const [panelScaleDraft, setPanelScaleDraft] = useState(settings.panelScale);
+  const [lastExtensionBackgroundLimit, setLastExtensionBackgroundLimit] = useState(
+    Math.max(1, settings.extensionBackgroundLimit)
+  );
 
   useEffect(() => {
     if (isOpen) {
@@ -65,6 +77,12 @@ export const SettingsDrawer: React.FC<SettingsDrawerProps> = ({
       setPanelScaleDraft(settings.panelScale);
     }
   }, [isOpen, settings.panelScale]);
+
+  useEffect(() => {
+    if (settings.extensionBackgroundLimit > 0) {
+      setLastExtensionBackgroundLimit(settings.extensionBackgroundLimit);
+    }
+  }, [settings.extensionBackgroundLimit]);
 
   if (!isOpen) return null;
 
@@ -101,6 +119,14 @@ export const SettingsDrawer: React.FC<SettingsDrawerProps> = ({
     if (settings.panelScale !== 1) {
       await updatePanelScale(1);
     }
+  };
+
+  const setExtensionBackgroundLimit = async (value: number) => {
+    const next = Math.min(MAX_EXTENSION_BACKGROUND_LIMIT, Math.max(0, Math.round(value)));
+    if (next > 0) {
+      setLastExtensionBackgroundLimit(next);
+    }
+    await updateExtensionBackgroundLimit(next);
   };
 
   return (
@@ -225,6 +251,57 @@ export const SettingsDrawer: React.FC<SettingsDrawerProps> = ({
               />
             </div>
 
+            {/* Extension Background Sessions */}
+            <div className="px-3.5 py-2.5 flex items-center justify-between min-h-[56px] gap-3">
+              <div className="min-w-0">
+                <span className="block text-[13px] text-[var(--color-text-primary)]">
+                  {t("extensionBackgroundLimitLabel")}
+                </span>
+                <span className="block mt-0.5 text-[10.5px] leading-tight text-[var(--color-text-subtle)]">
+                  {t("extensionBackgroundLimitDesc")}
+                </span>
+              </div>
+              <div className="flex items-center gap-2 shrink-0">
+                <div className="h-7 flex items-center rounded-lg border border-[var(--color-border-panel)] bg-[var(--color-hover-overlay)] overflow-hidden">
+                  <button
+                    type="button"
+                    aria-label={t("decreaseExtensionBackgroundLimit")}
+                    disabled={settings.extensionBackgroundLimit === 0}
+                    onClick={() =>
+                      void setExtensionBackgroundLimit(settings.extensionBackgroundLimit - 1)
+                    }
+                    className="w-7 h-7 flex items-center justify-center text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] hover:bg-[var(--color-bg-elevated)] disabled:opacity-30 disabled:cursor-not-allowed tactile-btn cursor-pointer"
+                  >
+                    <Minus size={12} weight="bold" />
+                  </button>
+                  <span className="w-7 text-center text-[12px] font-mono text-[var(--color-text-primary)] tabular-nums">
+                    {settings.extensionBackgroundLimit}
+                  </span>
+                  <button
+                    type="button"
+                    aria-label={t("increaseExtensionBackgroundLimit")}
+                    disabled={
+                      settings.extensionBackgroundLimit >= MAX_EXTENSION_BACKGROUND_LIMIT
+                    }
+                    onClick={() =>
+                      void setExtensionBackgroundLimit(settings.extensionBackgroundLimit + 1)
+                    }
+                    className="w-7 h-7 flex items-center justify-center text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] hover:bg-[var(--color-bg-elevated)] disabled:opacity-30 disabled:cursor-not-allowed tactile-btn cursor-pointer"
+                  >
+                    <Plus size={12} weight="bold" />
+                  </button>
+                </div>
+                <ToggleSwitch
+                  checked={settings.extensionBackgroundLimit > 0}
+                  onChange={(enabled) =>
+                    void setExtensionBackgroundLimit(
+                      enabled ? lastExtensionBackgroundLimit : 0
+                    )
+                  }
+                />
+              </div>
+            </div>
+
             {/* Presentation Mode */}
             <div className="px-3.5 py-2.5 flex items-center justify-between min-h-[48px] gap-3">
               <span className="text-[13px] text-[var(--color-text-primary)]">
@@ -330,7 +407,7 @@ export const SettingsDrawer: React.FC<SettingsDrawerProps> = ({
                 {t("versionLabel")}
               </span>
               <span className="text-[12px] font-mono text-[var(--color-text-subtle)]">
-                v0.5.3
+                v{packageMetadata.version}
               </span>
             </div>
           </div>

@@ -17,6 +17,10 @@ fn default_panel_scale() -> f64 {
     1.0
 }
 
+fn default_extension_background_limit() -> u32 {
+    3
+}
+
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct TodoItem {
@@ -117,6 +121,8 @@ pub struct AppSettings {
     pub presentation_mode: String,
     #[serde(default = "default_panel_scale")]
     pub panel_scale: f64,
+    #[serde(default = "default_extension_background_limit")]
+    pub extension_background_limit: u32,
 }
 
 impl Default for AppSettings {
@@ -128,7 +134,19 @@ impl Default for AppSettings {
             collapse_when_clicking_outside: true,
             presentation_mode: default_presentation_mode(),
             panel_scale: 1.0,
+            extension_background_limit: default_extension_background_limit(),
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn old_settings_default_to_three_background_extensions() {
+        let settings: AppSettings = serde_json::from_str("{}").unwrap();
+        assert_eq!(settings.extension_background_limit, 3);
     }
 }
 

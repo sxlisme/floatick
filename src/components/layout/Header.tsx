@@ -24,6 +24,7 @@ interface HeaderProps {
   activeTab: MainTab;
   extensions: LocalExtension[];
   activeExtensionId: string | null;
+  openExtensionIds: string[];
   onOpenSettings: () => void;
   onOpenExtensionSettings: () => void;
   onOpenExtension: (id: string) => void;
@@ -33,6 +34,7 @@ export const Header: React.FC<HeaderProps> = ({
   activeTab,
   extensions,
   activeExtensionId,
+  openExtensionIds,
   onOpenSettings,
   onOpenExtensionSettings,
   onOpenExtension,
@@ -206,6 +208,7 @@ export const Header: React.FC<HeaderProps> = ({
                 ) : (
                   extensions.map((extension) => {
                     const isActive = extension.id === activeExtensionId;
+                    const isOpen = openExtensionIds.includes(extension.id);
                     const isUrl = extension.sourceType === "url";
                     return (
                       <div
@@ -240,6 +243,11 @@ export const Header: React.FC<HeaderProps> = ({
                             )}
                           </span>
                           <span className="text-[12.5px] truncate">{extension.name}</span>
+                          {isOpen && !isActive && (
+                            <span className="ml-auto shrink-0 px-1.5 py-0.5 rounded text-[9px] font-medium bg-sky-500/10 text-sky-600 dark:text-sky-400">
+                              {t("extensionRunningInBackground")}
+                            </span>
+                          )}
                         </button>
                         <Tooltip content={t("openInBrowser")}>
                           <button
